@@ -102,4 +102,8 @@ ManyAI is free. If it saves you money or time, a tip is appreciated but never ex
 
 ## License
 
-MIT — do whatever you want with it.
+**GNU General Public License v3.0**
+
+Free to use, study, and modify. If you distribute a modified version — including publishing it on an app store — you must open-source your changes under the same GPL v3 license. You may not sell a closed-source product based on this code without the author's permission.
+
+© Steve Pleasants. See [LICENSE](LICENSE) for full terms.
