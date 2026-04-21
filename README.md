@@ -35,16 +35,33 @@ No ads. No banners. No subscriptions. Ever.
 
 ## Supported Providers
 
-| Provider | Model | Best For | Free? |
+**Always Free (no credit card)**
+
+| Provider | Default Model | Best For | Key Required |
 |---|---|---|---|
-| **Cerebras** | llama3.1-8b | Speed — fastest responses | ✓ Free |
-| **Groq** | llama-3.1-8b-instant | Reliability — fast and consistent | ✓ Free |
-| **Gemini** | gemini-2.5-flash-lite | Vision, translation, long documents | ✓ Free |
-| **Mistral** | mistral-small-latest | Coding, creative writing | ✓ Free |
-| **SambaNova** | Llama-3.3-70B | Deep reasoning, best quality | ✓ Free |
-| **Fireworks** | DeepSeek V3 | Coding, general fallback | ✓ Free |
-| **OpenAI** | gpt-4o-mini | Vision, general purpose | Free tier |
-| **Pollinations** | openai | No key needed — always works | ✓ Free |
+| **Pollinations** | openai | No key needed — always available | No |
+
+**Free API Tier (no credit card needed)**
+
+| Provider | Default Model | Best For |
+|---|---|---|
+| **Cerebras** | Llama 3.1 8B | Fastest responses of any provider |
+| **Groq** | Llama 3.1 8B | Fast, reliable general Q&A |
+| **Gemini** | Gemini 2.5 Flash Lite | Long documents, translation, vision |
+| **Mistral** | Mistral Small | Code generation, creative writing |
+| **SambaNova** | Llama 3.3 70B | Deep reasoning, best quality |
+| **Fireworks** | DeepSeek V3 | Strong coding, fast inference |
+| **OpenAI** | GPT-4o Mini | Vision, general purpose |
+| **Cloudflare** | Llama 3.1 8B | Edge-hosted, fast, no CC required |
+
+**Paid API (credit card required to sign up)**
+
+| Provider | Default Model | Best For |
+|---|---|---|
+| **OpenRouter** | Llama 3.1 8B (free tier available) | Access to hundreds of models |
+| **Hugging Face** | Llama 3.1 8B | Thousands of open-source models |
+| **Cohere** | Command R | Summarization, business tasks |
+| **Claude (Anthropic)** | Claude 3.5 Haiku | Exceptional reasoning and coding |
 
 ---
 
@@ -61,6 +78,11 @@ No ads. No banners. No subscriptions. Ever.
    - Fireworks: [fireworks.ai](https://fireworks.ai)
    - OpenAI: [platform.openai.com](https://platform.openai.com)
    - Gemini: [aistudio.google.com](https://aistudio.google.com)
+   - Cloudflare: [dash.cloudflare.com](https://dash.cloudflare.com) (key format: accountID:apiToken)
+   - OpenRouter: [openrouter.ai](https://openrouter.ai)
+   - Hugging Face: [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   - Cohere: [dashboard.cohere.com](https://dashboard.cohere.com)
+   - Anthropic: [console.anthropic.com](https://console.anthropic.com)
 
 > **Tip:** Go to [qr.io](https://qr.io) on your laptop, paste an API key, generate a QR code, then tap the **QR** button in the app to scan it in — no typing needed.
 
@@ -81,6 +103,20 @@ No ads. No banners. No subscriptions. Ever.
 All code in this app was written by **[Claude](https://claude.ai)** (Anthropic), under the direction of Steve Pleasants.
 
 AI calls during development were offloaded using **[the-brain](https://github.com/SoylentAquamarine/the-brain)** — an AI orchestration system that routes tasks to free providers so Claude doesn't burn tokens doing everything itself. ManyAI is essentially a mobile version of that same idea.
+
+---
+
+## Automated Model Maintenance
+
+A GitHub Actions workflow runs every Monday at 8am UTC. It:
+
+1. Calls every configured provider/model with a test prompt
+2. Removes any model that returns a 404 or 410 (permanently gone)
+3. Commits the change to `lib/providers.ts`
+4. Pushes an OTA update so users get the fix automatically
+
+Rate-limit errors (429) and timeouts are left alone — those are transient.
+You can also trigger it manually from the **Actions** tab in GitHub.
 
 ---
 
