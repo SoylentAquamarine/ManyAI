@@ -1,16 +1,13 @@
 /**
  * providers.ts — Provider registry and routing logic for ManyAI.
  *
- * Adding a new provider:
- *   1. Add its key to ProviderKey
- *   2. Add its config to PROVIDERS
- *   3. Add it to ROUTING_ORDER at the appropriate priority
- *   4. Add an adapter call in callProvider.ts if its API differs from OpenAI format
+ * paidOnly: true  = credit card required to sign up
+ * paidOnly: false = free tier available, no credit card needed
+ *
+ * Model list is also patched at runtime by remoteConfig.ts —
+ * edit stevepleasants.com/manyai/config.json to add/remove models without a build.
  */
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-/** Unique identifier for each provider — used as storage keys and route params */
 export type ProviderKey =
   | 'cerebras'
   | 'groq'
@@ -19,9 +16,13 @@ export type ProviderKey =
   | 'sambanova'
   | 'fireworks'
   | 'openai'
+  | 'openrouter'
+  | 'cloudflare'
+  | 'huggingface'
+  | 'anthropic'
+  | 'cohere'
   | 'pollinations';
 
-/** Task categories used to match prompts to the most suitable provider */
 export type TaskType =
   | 'coding'
   | 'summarization'
@@ -30,159 +31,299 @@ export type TaskType =
   | 'translation'
   | 'general';
 
-/** Full provider configuration */
-export interface Provider {
-  key: ProviderKey;
-  name: string;          // Display name
-  model: string;         // Default model identifier sent to the API
-  baseUrl: string;       // API base URL (no trailing slash)
-  needsKey: boolean;     // Whether an API key is required
-  color: string;         // Hex colour for UI indicators
-  bestFor: TaskType[];   // Task types this provider excels at
-  goodAt: string;        // Human-readable strengths (shown in Settings)
-  notGreatAt: string;    // Human-readable weaknesses (shown in Settings)
-  supportsVision: boolean; // Whether this provider accepts image input
+export interface ProviderModel {
+  id: string;
+  name: string;
 }
 
-// ─── Provider registry ────────────────────────────────────────────────────────
+export interface Provider {
+  key: ProviderKey;
+  name: string;
+  model: string;
+  models: ProviderModel[];
+  baseUrl: string;
+  needsKey: boolean;
+  paidOnly: boolean;           // true = credit card required to sign up
+  color: string;
+  bestFor: TaskType[];
+  goodAt: string;
+  notGreatAt: string;
+  supportsVision: boolean;
+  extraHeaders?: Record<string, string>; // Extra headers sent with every request
+  keyHint?: string;            // Shown in API Keys screen to explain key format
+}
 
 export const PROVIDERS: Record<ProviderKey, Provider> = {
+
+  // ── Free tier (no credit card) ─────────────────────────────────────────────
+
   cerebras: {
     key: 'cerebras',
     name: 'Cerebras',
     model: 'llama3.1-8b',
+    models: [
+      { id: 'llama3.1-8b',  name: 'Llama 3.1 8B (fastest)' },
+      { id: 'llama3.3-70b', name: 'Llama 3.3 70B (smarter)' },
+    ],
     baseUrl: 'https://api.cerebras.ai/v1',
     needsKey: true,
+    paidOnly: false,
     color: '#FF6B6B',
     bestFor: ['general'],
-    goodAt: 'Fastest responses of any provider — great for quick questions and classifications',
-    notGreatAt: 'Deep reasoning or long-form writing — smaller model',
+    goodAt: 'Fastest responses of any provider',
+    notGreatAt: 'Deep reasoning or long-form writing',
     supportsVision: false,
   },
+
   groq: {
     key: 'groq',
     name: 'Groq',
     model: 'llama-3.1-8b-instant',
+    models: [
+      { id: 'llama-3.1-8b-instant',   name: 'Llama 3.1 8B (fast)' },
+      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B' },
+    ],
     baseUrl: 'https://api.groq.com/openai/v1',
     needsKey: true,
+    paidOnly: false,
     color: '#4ECDC4',
     bestFor: ['general', 'summarization'],
-    goodAt: 'Fast, reliable general Q&A and summarisation. Very consistent.',
-    notGreatAt: 'Complex coding tasks or nuanced creative writing',
+    goodAt: 'Fast, reliable general Q&A and summarisation',
+    notGreatAt: 'Complex coding or nuanced creative writing',
     supportsVision: false,
   },
+
   gemini: {
     key: 'gemini',
     name: 'Gemini',
     model: 'gemini-2.5-flash-lite',
+    models: [
+      { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (fast)' },
+      { id: 'gemini-2.5-flash',      name: 'Gemini 2.5 Flash (best quality)' },
+    ],
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     needsKey: true,
+    paidOnly: false,
     color: '#45B7D1',
     bestFor: ['summarization', 'translation'],
     goodAt: 'Long documents, translation, and image understanding (vision)',
     notGreatAt: 'Can be slower than Groq/Cerebras for simple questions',
     supportsVision: true,
   },
+
   mistral: {
     key: 'mistral',
     name: 'Mistral',
     model: 'mistral-small-latest',
+    models: [
+      { id: 'mistral-small-latest', name: 'Mistral Small' },
+      { id: 'mistral-large-latest', name: 'Mistral Large (best quality)' },
+    ],
     baseUrl: 'https://api.mistral.ai/v1',
     needsKey: true,
+    paidOnly: false,
     color: '#96CEB4',
     bestFor: ['coding', 'creative'],
-    goodAt: 'Code generation, creative writing, and following detailed instructions',
-    notGreatAt: 'Real-time or very fast responses — slightly slower than Groq',
+    goodAt: 'Code generation, creative writing, detailed instructions',
+    notGreatAt: 'Slightly slower than Groq for simple questions',
     supportsVision: false,
   },
+
   sambanova: {
     key: 'sambanova',
     name: 'SambaNova',
     model: 'Meta-Llama-3.3-70B-Instruct',
+    models: [
+      { id: 'Meta-Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B' },
+    ],
     baseUrl: 'https://api.sambanova.ai/v1',
     needsKey: true,
+    paidOnly: false,
     color: '#FFEAA7',
     bestFor: ['reasoning'],
-    goodAt: 'Deep reasoning, analysis, and nuanced answers — 70B model, highest quality free tier',
+    goodAt: 'Deep reasoning and nuanced answers',
     notGreatAt: 'Speed — larger model means slower responses',
     supportsVision: false,
   },
+
+  openrouter: {
+    key: 'openrouter',
+    name: 'OpenRouter',
+    model: 'meta-llama/llama-3.1-8b-instruct:free',
+    models: [
+      { id: 'meta-llama/llama-3.1-8b-instruct:free',        name: 'Llama 3.1 8B (free)' },
+      { id: 'google/gemma-3-27b-it:free',                    name: 'Gemma 3 27B (free)' },
+      { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral Small 3.1 (free)' },
+      { id: 'meta-llama/llama-3.3-70b-instruct',             name: 'Llama 3.3 70B (paid)' },
+      { id: 'anthropic/claude-3.5-sonnet',                   name: 'Claude 3.5 Sonnet (paid)' },
+    ],
+    baseUrl: 'https://openrouter.ai/api/v1',
+    needsKey: true,
+    paidOnly: true,
+    color: '#A29BFE',
+    bestFor: ['general', 'coding'],
+    goodAt: 'Access to hundreds of models — free and paid — with one key',
+    notGreatAt: 'Free models have rate limits; quality varies by model',
+    supportsVision: false,
+    extraHeaders: {
+      'HTTP-Referer': 'https://stevepleasants.com/manyai',
+      'X-Title': 'ManyAI',
+    },
+  },
+
+  cloudflare: {
+    key: 'cloudflare',
+    name: 'Cloudflare AI',
+    model: '@cf/meta/llama-3.1-8b-instruct',
+    models: [
+      { id: '@cf/meta/llama-3.1-8b-instruct',          name: 'Llama 3.1 8B' },
+      { id: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', name: 'Llama 3.3 70B (fast)' },
+      { id: '@cf/mistral/mistral-7b-instruct-v0.1',    name: 'Mistral 7B' },
+    ],
+    baseUrl: 'https://api.cloudflare.com/client/v4/accounts',
+    needsKey: true,
+    paidOnly: true,
+    color: '#F0A500',
+    bestFor: ['general'],
+    goodAt: 'Runs on Cloudflare edge — fast and free tier available',
+    notGreatAt: 'Smaller model selection than other providers',
+    supportsVision: false,
+    keyHint: 'Enter as accountID:apiToken',
+  },
+
+  huggingface: {
+    key: 'huggingface',
+    name: 'Hugging Face',
+    model: 'meta-llama/Llama-3.1-8B-Instruct',
+    models: [
+      { id: 'meta-llama/Llama-3.1-8B-Instruct', name: 'Llama 3.1 8B' },
+      { id: 'Qwen/Qwen2.5-72B-Instruct',         name: 'Qwen 2.5 72B' },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B' },
+    ],
+    baseUrl: 'https://router.huggingface.co/hf-inference/v1',
+    needsKey: true,
+    paidOnly: true,
+    color: '#FFD93D',
+    bestFor: ['general', 'coding'],
+    goodAt: 'Massive model selection — thousands of open models available',
+    notGreatAt: 'Free tier is rate limited; cold starts can be slow',
+    supportsVision: false,
+  },
+
+  cohere: {
+    key: 'cohere',
+    name: 'Cohere',
+    model: 'command-r',
+    models: [
+      { id: 'command-r',          name: 'Command R' },
+      { id: 'command-r-plus',     name: 'Command R+ (best quality)' },
+      { id: 'command-a-03-2025',  name: 'Command A (newest)' },
+    ],
+    baseUrl: 'https://api.cohere.com/compatibility/v1',
+    needsKey: true,
+    paidOnly: true,
+    color: '#55EFC4',
+    bestFor: ['summarization', 'reasoning'],
+    goodAt: 'Strong at summarization, retrieval, and business tasks',
+    notGreatAt: 'Less well-known — smaller community than OpenAI/Meta models',
+    supportsVision: false,
+  },
+
+  // ── Paid (credit card required) ────────────────────────────────────────────
+
   fireworks: {
     key: 'fireworks',
     name: 'Fireworks',
     model: 'accounts/fireworks/models/deepseek-v3p1',
+    models: [
+      { id: 'accounts/fireworks/models/deepseek-v3p1',           name: 'DeepSeek V3' },
+      { id: 'accounts/fireworks/models/llama-v3p3-70b-instruct', name: 'Llama 3.3 70B' },
+    ],
     baseUrl: 'https://api.fireworks.ai/inference/v1',
     needsKey: true,
+    paidOnly: false,
     color: '#DDA0DD',
     bestFor: ['coding', 'general'],
-    goodAt: 'Strong coding with DeepSeek V3 — good fallback when others are down',
-    notGreatAt: 'Can return verbose responses; less consistent on simple questions',
+    goodAt: 'Strong coding with DeepSeek V3',
+    notGreatAt: 'Requires credit card; can return verbose responses',
     supportsVision: false,
   },
+
   openai: {
     key: 'openai',
     name: 'OpenAI',
     model: 'gpt-4o-mini',
+    models: [
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini (fast)' },
+      { id: 'gpt-4o',      name: 'GPT-4o (best quality)' },
+    ],
     baseUrl: 'https://api.openai.com/v1',
     needsKey: true,
+    paidOnly: false,
     color: '#74B9FF',
     bestFor: ['coding', 'reasoning', 'general'],
-    goodAt: 'Well-rounded — coding, image understanding (vision), instruction following',
-    notGreatAt: 'Free tier has rate limits; not as fast as Groq/Cerebras',
+    goodAt: 'Well-rounded — coding, vision, instruction following',
+    notGreatAt: 'Costs money; rate limits on lower tiers',
     supportsVision: true,
   },
+
+  anthropic: {
+    key: 'anthropic',
+    name: 'Claude (Anthropic)',
+    model: 'claude-3-5-haiku-20241022',
+    models: [
+      { id: 'claude-3-5-haiku-20241022',  name: 'Claude 3.5 Haiku (fast)' },
+      { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet (best)' },
+      { id: 'claude-3-opus-20240229',     name: 'Claude 3 Opus (most capable)' },
+    ],
+    baseUrl: 'https://api.anthropic.com/v1',
+    needsKey: true,
+    paidOnly: true,
+    color: '#FD79A8',
+    bestFor: ['coding', 'reasoning', 'creative'],
+    goodAt: 'Exceptional reasoning, coding, and long-form writing',
+    notGreatAt: 'Costs money; no free tier',
+    supportsVision: true,
+  },
+
+  // ── No key required ────────────────────────────────────────────────────────
+
   pollinations: {
     key: 'pollinations',
     name: 'Pollinations',
     model: 'openai',
+    models: [
+      { id: 'openai',  name: 'OpenAI (via Pollinations)' },
+      { id: 'mistral', name: 'Mistral (via Pollinations)' },
+      { id: 'llama',   name: 'Llama (via Pollinations)' },
+    ],
     baseUrl: 'https://text.pollinations.ai',
     needsKey: false,
+    paidOnly: false,
     color: '#FD79A8',
     bestFor: ['general', 'creative'],
     goodAt: 'No API key needed — always available as a fallback',
-    notGreatAt: 'Less reliable, no conversation context, variable quality',
+    notGreatAt: 'Less reliable, variable quality',
     supportsVision: false,
   },
 };
 
-/**
- * Default routing order — highest priority first.
- * Cerebras/Groq are fastest, SambaNova is highest quality,
- * Pollinations is always last (keyless fallback).
- */
 export const ROUTING_ORDER: ProviderKey[] = [
   'cerebras',
   'groq',
   'gemini',
   'mistral',
   'sambanova',
+  'openrouter',
+  'huggingface',
+  'cohere',
+  'cloudflare',
   'fireworks',
   'openai',
+  'anthropic',
   'pollinations',
 ];
 
-// ─── Routing logic ────────────────────────────────────────────────────────────
-
-/**
- * Selects the best available provider for a given task.
- *
- * Selection algorithm:
- *   Pass 1 — find a provider in `order` that:
- *     - is not in `exclude` (already tried / failed)
- *     - is enabled
- *     - has an available key (or needs no key)
- *     - lists `taskType` in its bestFor array
- *   Pass 2 — same criteria but without the bestFor requirement
- *   Pass 3 — fall back to Pollinations if not excluded
- *
- * Returns null if every provider has been exhausted.
- *
- * @param availableKeys - Set of provider keys that have a stored API key
- * @param taskType      - Detected or default task category
- * @param exclude       - Providers to skip (failed this request)
- * @param order         - Custom priority order from user preferences
- * @param enabled       - Per-provider enabled/disabled flags
- */
 export function pickProvider(
   availableKeys: Set<ProviderKey>,
   taskType: TaskType = 'general',
@@ -190,30 +331,24 @@ export function pickProvider(
   order: ProviderKey[] = ROUTING_ORDER,
   enabled: Partial<Record<ProviderKey, boolean>> = {}
 ): ProviderKey | null {
-  /** Returns true if the provider should be considered */
   const isCandidate = (k: ProviderKey): boolean => {
-    if (exclude.has(k)) return false;           // Already tried this request
-    if (enabled[k] === false) return false;      // User disabled it
-    if (k === 'pollinations') return true;        // Always available
-    return availableKeys.has(k);                 // Has a stored key
+    if (exclude.has(k)) return false;
+    if (enabled[k] === false) return false;
+    if (k === 'pollinations') return true;
+    return availableKeys.has(k);
   };
 
-  // Pass 1: best-fit provider for this task type
   for (const key of order) {
-    if (key === 'pollinations') continue; // Reserve Pollinations for last resort
+    if (key === 'pollinations') continue;
     if (!isCandidate(key)) continue;
     if (PROVIDERS[key].bestFor.includes(taskType)) return key;
   }
 
-  // Pass 2: any available keyed provider in priority order
   for (const key of order) {
     if (key === 'pollinations') continue;
     if (isCandidate(key)) return key;
   }
 
-  // Pass 3: Pollinations — no key needed, always works
   if (isCandidate('pollinations')) return 'pollinations';
-
-  // All providers exhausted
   return null;
 }

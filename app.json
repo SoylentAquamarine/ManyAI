@@ -2,7 +2,7 @@
   "expo": {
     "name": "ManyAI",
     "slug": "ManyAI",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "manyai",
@@ -12,6 +12,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.soylentaquamarine.manyai",
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,7 +21,15 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -27,6 +37,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow ManyAI to save generated images to your photo library.",
+          "savePhotosPermission": "Allow ManyAI to save generated images to your photo library.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -41,9 +59,22 @@
       ],
       "expo-secure-store"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/4678914e-7752-4777-9374-84c45f41d2c8"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4678914e-7752-4777-9374-84c45f41d2c8"
+      }
+    },
+    "owner": "stevepleasants"
   }
 }

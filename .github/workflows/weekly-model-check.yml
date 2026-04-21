@@ -1,0 +1,112 @@
+name: Weekly Model Health Check
+
+# Runs every Monday at 08:00 UTC.
+# Can also be triggered manually from the Actions tab.
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:        # manual trigger button in GitHub UI
+
+jobs:
+  check-models:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # needed to push the commit back
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Python setup ────────────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      # ── Node setup (for eas update) ──────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # ── Test all models ──────────────────────────────────────────────────────
+      - name: Test all provider models
+        env:
+          CEREBRAS_API_KEY:    ${{ secrets.CEREBRAS_API_KEY }}
+          GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
+          MISTRAL_API_KEY:     ${{ secrets.MISTRAL_API_KEY }}
+          SAMBANOVA_API_KEY:   ${{ secrets.SAMBANOVA_API_KEY }}
+          OPENROUTER_API_KEY:  ${{ secrets.OPENROUTER_API_KEY }}
+          HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+          COHERE_API_KEY:      ${{ secrets.COHERE_API_KEY }}
+          FIREWORKS_API_KEY:   ${{ secrets.FIREWORKS_API_KEY }}
+          OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/test_models.py
+
+      # ── Patch providers.ts if anything is dead ───────────────────────────────
+      - name: Patch providers.ts (remove dead models)
+        id: patch
+        run: |
+          python scripts/patch_providers.py
+          echo "changed=$?" >> $GITHUB_OUTPUT
+        # patch_providers.py exits 1 if changes were made, 0 if nothing changed.
+        # We capture the exit code but don't fail the job on exit 1.
+        continue-on-error: true
+
+      # ── Commit + push the updated file ──────────────────────────────────────
+      - name: Commit updated providers.ts
+        if: steps.patch.outputs.changed == '1'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/providers.ts
+          git commit -m "chore: remove deprecated models (weekly auto-check)"
+          git push
+
+      # ── Push OTA update via EAS ──────────────────────────────────────────────
+      - name: Push OTA update
+        if: steps.patch.outputs.changed == '1'
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          CI: '1'
+        run: npx eas update --branch production --message "Weekly model cleanup — removed deprecated models"
+
+      # ── Write job summary ────────────────────────────────────────────────────
+      - name: Write summary
+        if: always()
+        run: |
+          echo "## Weekly Model Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.patch.outputs.changed }}" == "1" ]; then
+            echo "**Changes made:** Dead models removed and OTA update pushed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**No changes:** All models passed (or failures were transient). providers.ts unchanged." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test results" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import json
+          with open('scripts/test_results.json') as f:
+              d = json.load(f)
+          print(f'Passed: {len(d[\"passed\"])}')
+          print(f'Failed: {len(d[\"failed\"])}')
+          if d['failed']:
+              print()
+              print('Failed models:')
+              for e in d['failed']:
+                  print(f'  {e[\"provider\"]}/{e[\"model\"]}: {e[\"response\"][:60]}')
+          " >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

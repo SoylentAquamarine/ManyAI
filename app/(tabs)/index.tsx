@@ -1,4 +1,6 @@
 /**
+ * ManyAI — © 2026 Steve Pleasants. All rights reserved.
+ *
  * index.tsx — Main chat screen for ManyAI.
  *
  * Handles:
@@ -8,19 +10,28 @@
  *   - Save-to-category for any AI response
  */
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import Constants from 'expo-constants';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
   Image, Alert, Modal, ScrollView,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { loadAllKeys } from '@/lib/keyStore';
 import { pickProvider, PROVIDERS, ProviderKey } from '@/lib/providers';
 import { callProvider } from '@/lib/callProvider';
-import { loadProviderOrder, loadEnabledProviders } from '@/lib/providerPrefs';
+import { loadProviderOrder, loadEnabledProviders, loadSelectedModels } from '@/lib/providerPrefs';
 import { saveResponse, loadCategories } from '@/lib/savedResponses';
+import { shareText, shareImage, saveImageToDevice } from '@/lib/shareUtils';
+import { HistoryMessage } from '@/lib/callProvider';
+import { consumeRefineSeed } from '@/lib/refineSeed';
+import {
+  isImageGenRequest, callImageProvider, IMAGE_PROVIDERS,
+  imageProviderName, imageProviderNeedsKey,
+} from '@/lib/imageGen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,11 +40,12 @@ type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  imageUri?: string;   // Local URI for display (user messages only)
-  provider?: string;   // Provider display name (AI messages only)
-  model?: string;      // Model used (AI messages only)
-  latencyMs?: number;  // Response time (AI messages only)
-  error?: boolean;     // True if this is an error message
+  imageUri?: string;          // User-attached image URI (input, user messages)
+  generatedImageUri?: string; // AI-generated image data URI (output, assistant messages)
+  provider?: string;          // Provider display name (AI messages only)
+  model?: string;             // Model used (AI messages only)
+  latencyMs?: number;         // Response time (AI messages only)
+  error?: boolean;            // True if this is an error message
 };
 
 /** Pending image data captured before sending */
@@ -77,10 +89,20 @@ export default function ChatScreen() {
   const [keys, setKeys] = useState<Partial<Record<ProviderKey, string>>>({});
   const [providerOrder, setProviderOrder] = useState<ProviderKey[]>([]);
   const [enabledProviders, setEnabledProviders] = useState<Partial<Record<ProviderKey, boolean>>>({});
+  const [selectedModels, setSelectedModels] = useState<Partial<Record<ProviderKey, string>>>({});
 
   // Save modal state
   const [saveTarget, setSaveTarget] = useState<Message | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+
+  /**
+   * When a saved response is being refined, we show its title in the header
+   * so the user knows what context the conversation is seeded with.
+   */
+  const [refineTitle, setRefineTitle] = useState<string | null>(null);
+
+  /** Help modal — shown on first launch and when user types /help */
+  const [showHelp, setShowHelp] = useState(false);
 
   /**
    * Providers that have failed during this session.
@@ -90,6 +112,18 @@ export default function ChatScreen() {
   const failedProviders = useRef<Set<ProviderKey>>(new Set());
 
   const listRef = useRef<FlatList>(null);
+
+  // ─── First-launch onboarding ───────────────────────────────────────────────
+
+  /** Show the help modal automatically the very first time the app is opened */
+  useEffect(() => {
+    AsyncStorage.getItem('manyai_onboarded').then(val => {
+      if (!val) {
+        setShowHelp(true);
+        AsyncStorage.setItem('manyai_onboarded', '1');
+      }
+    });
+  }, []);
 
   // ─── Data loading ──────────────────────────────────────────────────────────
 
@@ -104,12 +138,42 @@ export default function ChatScreen() {
       loadProviderOrder(),
       loadEnabledProviders(),
       loadCategories(),
-    ]).then(([k, order, enabled, cats]) => {
+      loadSelectedModels(),
+    ]).then(([k, order, enabled, cats, models]) => {
       setKeys(k);
       setProviderOrder(order);
       setEnabledProviders(enabled);
       setCategories(cats);
+      setSelectedModels(models);
       failedProviders.current = new Set(); // Reset on each focus
+
+      // Check if the Saved screen sent us a response to refine.
+      // consumeRefineSeed() reads the module-level variable and clears it.
+      const seed = consumeRefineSeed();
+      if (seed) {
+        // Seed the conversation with the saved prompt + response as context,
+        // then let the user continue from there.
+        setRefineTitle(seed.title);
+        setMessages([
+          {
+            id: '0',
+            role: 'assistant',
+            content: 'Hi! I am ManyAI. Ask me anything and I will route it to the best available free AI provider.',
+            provider: 'system',
+          },
+          {
+            id: makeId(),
+            role: 'user',
+            content: seed.prompt,
+          },
+          {
+            id: makeId(),
+            role: 'assistant',
+            content: seed.response,
+            provider: seed.provider,
+          },
+        ]);
+      }
     });
   }, []));
 
@@ -154,11 +218,40 @@ export default function ChatScreen() {
     }
   };
 
+  // ─── Clear chat ────────────────────────────────────────────────────────────
+
+  /**
+   * Reset the conversation to the initial greeting and clear all history.
+   * Also resets the failed-providers list so every provider is tried fresh.
+   */
+  const clearChat = () => {
+    Alert.alert('Clear chat', 'Start a new conversation? This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => {
+        setMessages([{
+          id: '0',
+          role: 'assistant',
+          content: 'Hi! I am ManyAI. Ask me anything and I will route it to the best available free AI provider.',
+          provider: 'system',
+        }]);
+        setRefineTitle(null);
+        failedProviders.current = new Set();
+      }},
+    ]);
+  };
+
   // ─── Send logic ────────────────────────────────────────────────────────────
 
   const send = async () => {
     const text = input.trim();
     if ((!text && !pendingImage) || loading) return;
+
+    // ── /help command ────────────────────────────────────────────────────────
+    if (text.toLowerCase() === '/help') {
+      setInput('');
+      setShowHelp(true);
+      return;
+    }
 
     // Capture pendingImage NOW before clearing state.
     // React state updates are async — if we clear pendingImage then reference
@@ -177,6 +270,55 @@ export default function ChatScreen() {
     setPendingImage(null);
     setLoading(true);
 
+    // ── Image generation path ────────────────────────────────────────────────
+    // If the prompt looks like an image request (and no image is attached for
+    // vision analysis), route to image generation providers instead of LLMs.
+    if (text && !imageSnapshot && isImageGenRequest(text)) {
+      let imgLastError = 'No image providers available';
+
+      for (const imgKey of IMAGE_PROVIDERS) {
+        // Skip if this provider needs a key we don't have
+        if (imageProviderNeedsKey(imgKey) && !keys['fireworks']) continue;
+
+        setLoadingLabel(`Generating image with ${imageProviderName(imgKey)}...`);
+
+        const apiKey = imgKey === 'fireworks_img' ? keys['fireworks'] : undefined;
+        const result = await callImageProvider(imgKey, text, apiKey);
+
+        if (!result.error && result.base64) {
+          // Build a data URI so React Native's Image component can display it
+          const dataUri = `data:${result.mime};base64,${result.base64}`;
+          setMessages(prev => [...prev, {
+            id: makeId(),
+            role: 'assistant',
+            content: '',  // Visual only — the image IS the content
+            generatedImageUri: dataUri,
+            provider: result.providerName,
+            latencyMs: result.latencyMs,
+          }]);
+          setLoading(false);
+          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+          return;
+        }
+
+        imgLastError = result.error ?? 'No image returned';
+        // Continue to next image provider
+      }
+
+      // All image providers failed
+      setMessages(prev => [...prev, {
+        id: makeId(),
+        role: 'assistant',
+        content: `Image generation failed: ${imgLastError}`,
+        error: true,
+      }]);
+      setLoading(false);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+      return;
+    }
+
+    // ── Text generation path (default) ───────────────────────────────────────
+
     // Build the set of providers that have keys configured
     const available = new Set<ProviderKey>([
       ...Object.keys(keys) as ProviderKey[],
@@ -188,6 +330,12 @@ export default function ChatScreen() {
     const pool = imageSnapshot
       ? new Set([...available].filter(k => VISION_PROVIDERS.has(k)))
       : available;
+
+    // Build conversation history from previous messages for context.
+    // Exclude error messages and the system greeting — only real exchanges.
+    const history: HistoryMessage[] = messages
+      .filter(m => m.provider !== 'system' && !m.error && m.content !== '(image)')
+      .map(m => ({ role: m.role, content: m.content }));
 
     // Try providers in order, skipping known failures
     let lastError = 'No providers available';
@@ -201,14 +349,20 @@ export default function ChatScreen() {
       // All providers exhausted
       if (!providerKey) break;
 
-      setLoadingLabel(`Trying ${PROVIDERS[providerKey].name}...`);
+      // Inject the user's chosen model (may differ from provider default)
+      const providerWithModel = {
+        ...PROVIDERS[providerKey],
+        model: selectedModels[providerKey] ?? PROVIDERS[providerKey].model,
+      };
+      setLoadingLabel(`Trying ${providerWithModel.name} · ${providerWithModel.model.split('/').pop()}...`);
 
       const result = await callProvider(
-        PROVIDERS[providerKey],
+        providerWithModel,
         text,
         keys[providerKey] ?? undefined,
         imageSnapshot?.base64,
         imageSnapshot?.mime,
+        history,
       );
 
       if (!result.error && result.content) {
@@ -232,11 +386,14 @@ export default function ChatScreen() {
       failedProviders.current.add(providerKey);
     }
 
-    // All providers failed — show error message
+    // All providers failed — show helpful error message
+    const noProvidersMsg = lastError === 'No providers available'
+      ? 'No providers are enabled or have API keys. Go to Settings → API Keys to add free keys from Groq, Cerebras, Gemini, Mistral, SambaNova, OpenRouter, Hugging Face, or Cohere. Pollinations requires no key and is always available.'
+      : `All providers failed. Last error: ${lastError}\n\nTip: Go to Settings → Providers & Models to check which providers are enabled.`;
     setMessages(prev => [...prev, {
       id: makeId(),
       role: 'assistant',
-      content: `All providers failed. Last error: ${lastError}`,
+      content: noProvidersMsg,
       error: true,
     }]);
     setLoading(false);
@@ -250,20 +407,34 @@ export default function ChatScreen() {
    * every time the input field changes.
    */
   const renderItem = useCallback(({ item }: { item: Message }) => (
-    <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-      {/* Attached image preview (user messages) */}
+    <View style={[
+      styles.bubble,
+      item.role === 'user' ? styles.userBubble : styles.aiBubble,
+      // Give generated-image bubbles more width so the image isn't tiny
+      item.generatedImageUri ? styles.imageBubble : null,
+    ]}>
+      {/* User-attached image preview (sent TO the AI) */}
       {item.imageUri && (
         <Image source={{ uri: item.imageUri }} style={styles.msgImage} />
       )}
 
-      {/* Message text — hidden if the message was image-only */}
-      {item.content !== '(image)' && (
+      {/* AI-generated image (returned FROM the AI) */}
+      {item.generatedImageUri && (
+        <Image
+          source={{ uri: item.generatedImageUri }}
+          style={styles.generatedImage}
+          resizeMode="contain"
+        />
+      )}
+
+      {/* Message text — skip empty content and the "(image)" placeholder */}
+      {item.content !== '(image)' && item.content !== '' && (
         <Text style={[styles.bubbleText, item.error && styles.errorText]}>
           {item.content}
         </Text>
       )}
 
-      {/* Footer: provider info + Save button (AI messages only) */}
+      {/* Footer: provider info + action buttons (AI messages only) */}
       {item.provider && item.provider !== 'system' && (
         <View style={styles.bubbleFooter}>
           <Text style={styles.providerLabel}>
@@ -272,15 +443,33 @@ export default function ChatScreen() {
             {item.latencyMs ? ` · ${item.latencyMs}ms` : ''}
           </Text>
           {!item.error && (
-            <TouchableOpacity
-              onPress={() => {
-                // Refresh categories in case user added some in Settings
-                loadCategories().then(setCategories);
-                setSaveTarget(item);
-              }}
-            >
-              <Text style={styles.saveBtnText}>Save</Text>
-            </TouchableOpacity>
+            <View style={styles.bubbleActions}>
+              {/* Generated image — Save to device and Share */}
+              {item.generatedImageUri ? (
+                <>
+                  <TouchableOpacity onPress={() => saveImageToDevice(item.generatedImageUri!)}>
+                    <Text style={styles.actionBtnText}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => shareImage(item.generatedImageUri!)}>
+                    <Text style={styles.actionBtnText}>Share</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                /* Text response — share the text */
+                <TouchableOpacity onPress={() => shareText(item.content)}>
+                  <Text style={styles.actionBtnText}>Share</Text>
+                </TouchableOpacity>
+              )}
+              {/* Save to app — always available */}
+              <TouchableOpacity
+                onPress={() => {
+                  loadCategories().then(setCategories);
+                  setSaveTarget(item);
+                }}
+              >
+                <Text style={styles.saveBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       )}
@@ -302,14 +491,20 @@ export default function ChatScreen() {
    */
   const handleSave = useCallback(async (cat: string) => {
     if (!saveTarget) return;
-    // Use functional state access pattern to avoid stale closure on messages
     setMessages(currentMessages => {
       const idx = currentMessages.findIndex(m => m.id === saveTarget.id);
       const prompt = idx > 0 ? currentMessages[idx - 1].content : '';
-      // Fire-and-forget the async save (can't await inside setState callback)
-      saveResponse(prompt, saveTarget.content, saveTarget.provider ?? '', cat)
-        .then(() => Alert.alert('Saved!', `Response saved to "${cat}"`));
-      return currentMessages; // No change to messages
+      // Pass generatedImageUri so image responses are saved with their image,
+      // not just the empty content string.
+      saveResponse(
+        prompt,
+        saveTarget.content,
+        saveTarget.provider ?? '',
+        cat,
+        undefined,                       // title — let defaultTitle derive it from prompt
+        saveTarget.generatedImageUri,    // data URI for generated images
+      ).then(() => Alert.alert('Saved!', `Saved to "${cat}"`));
+      return currentMessages;
     });
     setSaveTarget(null);
   }, [saveTarget]);
@@ -319,19 +514,35 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={90}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 90}
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          ManyAI <Text style={styles.version}>v0.7</Text>
-        </Text>
-        <Text style={styles.headerSub}>
-          {keyCount > 0
-            ? `${keyCount + 1} providers ready`
-            : 'Using Pollinations (free) — add keys in Settings for more'}
-        </Text>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>
+              ManyAI <Text style={styles.version}>v{Constants.expoConfig?.version ?? '1.0'}</Text>
+            </Text>
+            {refineTitle ? (
+              <Text style={styles.refineLabel} numberOfLines={1}>✎ Refining: {refineTitle}</Text>
+            ) : (
+              <Text style={styles.headerSub}>
+                {keyCount > 0
+                  ? `${keyCount + 1} providers ready`
+                  : 'Using Pollinations (free) — add keys in Settings for more'}
+              </Text>
+            )}
+          </View>
+          {/* Help button */}
+          <TouchableOpacity style={styles.helpBtn} onPress={() => setShowHelp(true)}>
+            <Text style={styles.helpBtnText}>?</Text>
+          </TouchableOpacity>
+          {/* Clear chat button — always visible in header */}
+          <TouchableOpacity style={styles.clearBtn} onPress={clearChat}>
+            <Text style={styles.clearBtnText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Message list */}
@@ -420,6 +631,88 @@ export default function ChatScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Help / Onboarding Modal ── */}
+      <Modal
+        visible={showHelp}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowHelp(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.helpBox}>
+            <View style={styles.helpHeader}>
+              <Text style={styles.helpTitle}>ManyAI Help</Text>
+              <TouchableOpacity onPress={() => setShowHelp(false)}>
+                <Text style={styles.helpClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.helpScroll} showsVerticalScrollIndicator={false}>
+
+              <Text style={styles.helpSection}>What is ManyAI?</Text>
+              <Text style={styles.helpBody}>
+                ManyAI routes your questions to the best available free AI provider automatically. If one fails or hits a rate limit, it tries the next — so you always get an answer.
+              </Text>
+
+              <Text style={styles.helpSection}>🤖 Asking questions</Text>
+              <Text style={styles.helpBody}>
+                Type anything and tap Send. ManyAI picks the fastest available provider for you. The provider name and response time appear below each reply.
+              </Text>
+
+              <Text style={styles.helpSection}>🎨 Generating images</Text>
+              <Text style={styles.helpBody}>
+                Ask naturally:{'\n'}
+                • "Draw me a cat in a tree"{'\n'}
+                • "Create an image of a sunset"{'\n'}
+                • "Paint a watercolor landscape"{'\n\n'}
+                ManyAI detects image requests and routes them to Pollinations (free, no key needed).
+              </Text>
+
+              <Text style={styles.helpSection}>🔑 Adding API keys</Text>
+              <Text style={styles.helpBody}>
+                Go to Settings → API Keys to add free keys from Groq, Cerebras, Gemini, Mistral, SambaNova, OpenRouter, Hugging Face, Cohere, or Cloudflare. Pollinations requires no key at all. The more keys you add, the more fallbacks you have.{'\n\n'}
+                Tip: tap the QR button to scan your key from a QR code on your laptop — visit qr.io, paste the key, and scan.
+              </Text>
+
+              <Text style={styles.helpSection}>📷 Sending images</Text>
+              <Text style={styles.helpBody}>
+                Tap 🖼 to attach from your gallery or 📷 to take a photo. Only vision-capable providers (OpenAI, Gemini) can analyze images — make sure you have one of those keys added.
+              </Text>
+
+              <Text style={styles.helpSection}>💾 Saving responses</Text>
+              <Text style={styles.helpBody}>
+                Tap Save below any AI response to save it to a category. You can rename, move, edit, share, and delete saved items from the Saved tab.
+              </Text>
+
+              <Text style={styles.helpSection}>✎ Refining saved text</Text>
+              <Text style={styles.helpBody}>
+                On the Saved tab, expand a text response and tap Refine. ManyAI loads that conversation as context so you can continue or improve it.
+              </Text>
+
+              <Text style={styles.helpSection}>⚙️ Providers & Models</Text>
+              <Text style={styles.helpBody}>
+                Go to Settings → Providers & Models to reorder providers, enable or disable them, and pick which model each one uses.
+              </Text>
+
+              <Text style={styles.helpSection}>💡 Commands</Text>
+              <Text style={styles.helpBody}>
+                <Text style={styles.helpCmd}>/help</Text>{'  '}— show this screen
+              </Text>
+
+              <Text style={[styles.helpBody, { textAlign: 'center', marginTop: 20, color: '#444' }]}>
+                ManyAI is shareware — free to use, supported by donations.{'\n'}
+                If it saves you money on AI subscriptions, please consider supporting development via the Donate section in Settings.{'\n\n'}
+                Built by Steve Pleasants · Code by Claude{'\n'}
+                © 2026 Steve Pleasants. All rights reserved.
+              </Text>
+
+            </ScrollView>
+            <TouchableOpacity style={styles.helpDoneBtn} onPress={() => setShowHelp(false)}>
+              <Text style={styles.helpDoneBtnText}>Got it!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -433,20 +726,40 @@ const styles = StyleSheet.create({
     paddingTop: 54, paddingBottom: 12, paddingHorizontal: 16,
     backgroundColor: '#16213e', borderBottomWidth: 1, borderBottomColor: '#0f3460',
   },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#4ECDC4' },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  headerTitle: { fontSize: 34, fontWeight: 'bold', color: '#ffffff' },
   version: { fontSize: 12, fontWeight: 'normal', color: '#444' },
   headerSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  refineLabel: { fontSize: 12, color: '#4ECDC4', marginTop: 2, opacity: 0.8 },
+  helpBtn: {
+    backgroundColor: '#0f3460', borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderWidth: 1, borderColor: '#4ECDC4', marginLeft: 8,
+  },
+  helpBtnText: { color: '#4ECDC4', fontSize: 14, fontWeight: 'bold' },
+  clearBtn: {
+    backgroundColor: '#0f3460', borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderWidth: 1, borderColor: '#555', marginLeft: 8,
+  },
+  clearBtnText: { color: '#888', fontSize: 12 },
 
   messageList: { padding: 12, paddingBottom: 8 },
   bubble: { maxWidth: '82%', borderRadius: 16, padding: 12, marginBottom: 10 },
   userBubble: { alignSelf: 'flex-end', backgroundColor: '#0f3460' },
   aiBubble: { alignSelf: 'flex-start', backgroundColor: '#16213e', borderWidth: 1, borderColor: '#0f3460' },
+  // Generated image bubbles get wider so the image has room to breathe
+  imageBubble: { maxWidth: '95%', width: '95%' },
   bubbleText: { color: '#eeeeee', fontSize: 15, lineHeight: 22 },
   errorText: { color: '#FF6B6B' },
   msgImage: { width: 200, height: 150, borderRadius: 8, marginBottom: 6 },
+  // AI-generated output image — fills the bubble width
+  generatedImage: { width: '100%', aspectRatio: 1, borderRadius: 10, marginBottom: 6 },
   bubbleFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   providerLabel: { color: '#4ECDC4', fontSize: 10, opacity: 0.7, flex: 1 },
-  saveBtnText: { color: '#4ECDC4', fontSize: 11, fontWeight: '600', paddingLeft: 8 },
+  bubbleActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  actionBtnText: { color: '#888', fontSize: 14, fontWeight: '600', paddingHorizontal: 4, paddingVertical: 4 },
+  saveBtnText: { color: '#4ECDC4', fontSize: 14, fontWeight: '600', paddingHorizontal: 4, paddingVertical: 4 },
 
   typingRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
   typingText: { color: '#888', fontSize: 13 },
@@ -490,4 +803,31 @@ const styles = StyleSheet.create({
   categoryBtnText: { color: '#eeeeee', fontSize: 15 },
   modalCancelBtn: { marginTop: 8, padding: 14, alignItems: 'center' },
   modalCancelText: { color: '#888', fontSize: 15 },
+
+  // Help modal
+  helpBox: {
+    backgroundColor: '#16213e',
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: 0,
+    maxHeight: '92%',
+  },
+  helpHeader: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 16,
+  },
+  helpTitle: { color: '#4ECDC4', fontSize: 20, fontWeight: 'bold' },
+  helpClose: { color: '#555', fontSize: 22, paddingLeft: 16 },
+  helpScroll: { marginBottom: 12 },
+  helpSection: {
+    color: '#ffffff', fontSize: 15, fontWeight: '700',
+    marginTop: 18, marginBottom: 6,
+  },
+  helpBody: { color: '#aaa', fontSize: 14, lineHeight: 22 },
+  helpCmd: { color: '#4ECDC4', fontFamily: 'monospace', fontWeight: '600' },
+  helpDoneBtn: {
+    backgroundColor: '#4ECDC4', borderRadius: 14,
+    padding: 16, alignItems: 'center',
+    marginTop: 8, marginBottom: 32,
+  },
+  helpDoneBtnText: { color: '#1a1a2e', fontWeight: 'bold', fontSize: 16 },
 });
