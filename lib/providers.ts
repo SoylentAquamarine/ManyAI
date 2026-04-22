@@ -203,10 +203,10 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
   huggingface: {
     key: 'huggingface',
     name: 'Hugging Face',
-    model: 'meta-llama/Llama-3.1-8B-Instruct',
+    model: 'Qwen/Qwen2.5-72B-Instruct',
     models: [
-      { id: 'meta-llama/Llama-3.1-8B-Instruct', name: 'Llama 3.1 8B' },
-      { id: 'Qwen/Qwen2.5-72B-Instruct',         name: 'Qwen 2.5 72B' },
+      { id: 'Qwen/Qwen2.5-72B-Instruct',          name: 'Qwen 2.5 72B' },
+      { id: 'meta-llama/Llama-3.1-8B-Instruct',   name: 'Llama 3.1 8B' },
       { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B' },
     ],
     baseUrl: 'https://router.huggingface.co/v1',
