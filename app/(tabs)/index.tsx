@@ -12,6 +12,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Constants from 'expo-constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -21,7 +22,7 @@ import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { loadAllKeys } from '@/lib/keyStore';
-import { pickProvider, PROVIDERS, ProviderKey } from '@/lib/providers';
+import { pickProvider, PROVIDERS, ROUTING_ORDER, ProviderKey } from '@/lib/providers';
 import { callProvider } from '@/lib/callProvider';
 import { loadProviderOrder, loadEnabledProviders, loadSelectedModels } from '@/lib/providerPrefs';
 import { saveResponse, loadCategories } from '@/lib/savedResponses';
@@ -57,8 +58,10 @@ type PendingImage = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-/** Only these providers accept image input */
-const VISION_PROVIDERS = new Set<ProviderKey>(['openai', 'gemini']);
+/** Providers that accept image input — derived from supportsVision in providers.ts */
+const VISION_PROVIDERS = new Set<ProviderKey>(
+  ROUTING_ORDER.filter(k => PROVIDERS[k].supportsVision)
+);
 
 /** Maximum number of providers to try before giving up */
 const MAX_RETRIES = 8;
@@ -69,6 +72,8 @@ const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ChatScreen() {
+  const insets = useSafeAreaInsets();
+
   // Conversation state
   const [messages, setMessages] = useState<Message[]>([{
     id: '0',
@@ -387,8 +392,12 @@ export default function ChatScreen() {
     }
 
     // All providers failed — show helpful error message
+    const freeProviderNames = ROUTING_ORDER
+      .filter(k => k !== 'pollinations' && !PROVIDERS[k].paidOnly && PROVIDERS[k].needsKey)
+      .map(k => PROVIDERS[k].name)
+      .join(', ');
     const noProvidersMsg = lastError === 'No providers available'
-      ? 'No providers are enabled or have API keys. Go to Settings → API Keys to add free keys from Groq, Cerebras, Gemini, Mistral, SambaNova, OpenRouter, Hugging Face, or Cohere. Pollinations requires no key and is always available.'
+      ? `No providers are enabled or have API keys. Go to Settings → API Keys to add free keys from ${freeProviderNames}. Pollinations requires no key and is always available.`
       : `All providers failed. Last error: ${lastError}\n\nTip: Go to Settings → Providers & Models to check which providers are enabled.`;
     setMessages(prev => [...prev, {
       id: makeId(),
@@ -483,6 +492,15 @@ export default function ChatScreen() {
 
   const keyCount = Object.keys(keys).length;
 
+  /**
+   * True active provider count: providers in the current order that are
+   * enabled AND either have a key or require no key (Pollinations).
+   */
+  const activeProviderCount = providerOrder.filter(pk =>
+    enabledProviders[pk] !== false &&
+    (pk === 'pollinations' || !!keys[pk as ProviderKey])
+  ).length;
+
   // ─── Save handler ──────────────────────────────────────────────────────────
 
   /**
@@ -528,8 +546,10 @@ export default function ChatScreen() {
               <Text style={styles.refineLabel} numberOfLines={1}>✎ Refining: {refineTitle}</Text>
             ) : (
               <Text style={styles.headerSub}>
-                {keyCount > 0
-                  ? `${keyCount + 1} providers ready`
+                {activeProviderCount > 1
+                  ? `${activeProviderCount} providers ready`
+                  : activeProviderCount === 1
+                  ? '1 provider ready'
                   : 'Using Pollinations (free) — add keys in Settings for more'}
               </Text>
             )}
@@ -640,7 +660,7 @@ export default function ChatScreen() {
         onRequestClose={() => setShowHelp(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.helpBox}>
+          <View style={[styles.helpBox, { paddingBottom: Math.max(insets.bottom, 16) }]}>
             <View style={styles.helpHeader}>
               <Text style={styles.helpTitle}>ManyAI Help</Text>
               <TouchableOpacity onPress={() => setShowHelp(false)}>
@@ -670,13 +690,22 @@ export default function ChatScreen() {
 
               <Text style={styles.helpSection}>🔑 Adding API keys</Text>
               <Text style={styles.helpBody}>
-                Go to Settings → API Keys to add free keys from Groq, Cerebras, Gemini, Mistral, SambaNova, OpenRouter, Hugging Face, Cohere, or Cloudflare. Pollinations requires no key at all. The more keys you add, the more fallbacks you have.{'\n\n'}
-                Tip: tap the QR button to scan your key from a QR code on your laptop — visit qr.io, paste the key, and scan.
+                {`Go to Settings → API Keys to add free keys from ${
+                  ROUTING_ORDER
+                    .filter(k => k !== 'pollinations' && !PROVIDERS[k].paidOnly && PROVIDERS[k].needsKey)
+                    .map(k => PROVIDERS[k].name)
+                    .join(', ')
+                }. Pollinations requires no key at all. The more keys you add, the more fallbacks you have.\n\nTip: tap the QR button to scan your key from a QR code on your laptop — visit qr.io, paste the key, and scan.`}
               </Text>
 
               <Text style={styles.helpSection}>📷 Sending images</Text>
               <Text style={styles.helpBody}>
-                Tap 🖼 to attach from your gallery or 📷 to take a photo. Only vision-capable providers (OpenAI, Gemini) can analyze images — make sure you have one of those keys added.
+                {`Tap 🖼 to attach from your gallery or 📷 to take a photo. Only vision-capable providers (${
+                  ROUTING_ORDER
+                    .filter(k => PROVIDERS[k].supportsVision)
+                    .map(k => PROVIDERS[k].name)
+                    .join(', ')
+                }) can analyze images — make sure you have one of those keys added.`}
               </Text>
 
               <Text style={styles.helpSection}>💾 Saving responses</Text>
@@ -827,7 +856,7 @@ const styles = StyleSheet.create({
   helpDoneBtn: {
     backgroundColor: '#4ECDC4', borderRadius: 14,
     padding: 16, alignItems: 'center',
-    marginTop: 8, marginBottom: 32,
+    marginTop: 8,
   },
   helpDoneBtnText: { color: '#1a1a2e', fontWeight: 'bold', fontSize: 16 },
 });
