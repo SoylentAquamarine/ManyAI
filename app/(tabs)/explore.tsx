@@ -155,18 +155,21 @@ export default function SettingsScreen() {
 
   // ─── Provider order ──────────────────────────────────────────────────────
 
-  const moveUp = async (index: number) => {
-    if (index === 0) return;
+  // Move by provider key so filtered-list indices don't corrupt the full order array
+  const moveUp = async (pk: ProviderKey) => {
+    const idx = providerOrder.indexOf(pk);
+    if (idx <= 0) return;
     const next = [...providerOrder];
-    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
     setProviderOrder(next);
     await saveProviderOrder(next);
   };
 
-  const moveDown = async (index: number) => {
-    if (index === providerOrder.length - 1) return;
+  const moveDown = async (pk: ProviderKey) => {
+    const idx = providerOrder.indexOf(pk);
+    if (idx >= providerOrder.length - 1) return;
     const next = [...providerOrder];
-    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
     setProviderOrder(next);
     await saveProviderOrder(next);
   };
@@ -467,10 +470,10 @@ export default function SettingsScreen() {
                   </View>
                 </View>
                 <View style={s.providerRowRight}>
-                  <TouchableOpacity style={s.arrowBtn} onPress={() => moveUp(index)} disabled={index === 0}>
+                  <TouchableOpacity style={s.arrowBtn} onPress={() => moveUp(pk)} disabled={index === 0}>
                     <Text style={[s.arrowText, index === 0 && s.arrowDisabled]}>▲</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={s.arrowBtn} onPress={() => moveDown(index)} disabled={index === arr.length - 1}>
+                  <TouchableOpacity style={s.arrowBtn} onPress={() => moveDown(pk)} disabled={index === arr.length - 1}>
                     <Text style={[s.arrowText, index === arr.length - 1 && s.arrowDisabled]}>▼</Text>
                   </TouchableOpacity>
                   <Switch
@@ -593,37 +596,35 @@ export default function SettingsScreen() {
         <TouchableOpacity onPress={() => setScreen('menu')}><Text style={s.back}>← Back</Text></TouchableOpacity>
         <Text style={s.subTitle}>How to Get Keys</Text>
       </View>
+
       <Text style={[s.subTitle, { marginBottom: 8 }]}>🟢 Free — No Credit Card</Text>
-      {[
-        { name: 'Groq',      url: 'console.groq.com' },
-        { name: 'Cerebras',  url: 'cloud.cerebras.ai' },
-        { name: 'Gemini',    url: 'aistudio.google.com' },
-        { name: 'Mistral',   url: 'console.mistral.ai' },
-        { name: 'SambaNova', url: 'cloud.sambanova.ai' },
-        { name: 'Fireworks', url: 'fireworks.ai' },
-        { name: 'OpenAI',    url: 'platform.openai.com' },
-      ].map(({ name, url, hint }) => (
-        <TouchableOpacity key={name} style={s.keyRow} onPress={() => Linking.openURL(`https://${url}`)}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.providerName}>{name}</Text>
-            {hint && <Text style={[s.hint, { marginBottom: 0, marginTop: 2 }]}>{hint}</Text>}
-          </View>
-          <Text style={s.teal}>{url} ›</Text>
-        </TouchableOpacity>
-      ))}
+      {FREE_KEY_PROVIDERS.map(pk => {
+        const p = PROVIDERS[pk];
+        return (
+          <TouchableOpacity key={pk} style={s.keyRow} onPress={() => Linking.openURL(`https://${p.instructionsUrl}`)}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.providerName}>{p.name}</Text>
+              {p.keyHint && <Text style={[s.hint, { marginBottom: 0, marginTop: 2 }]}>{p.keyHint}</Text>}
+            </View>
+            <Text style={s.teal}>{p.instructionsUrl} ›</Text>
+          </TouchableOpacity>
+        );
+      })}
+
       <Text style={[s.subTitle, { marginTop: 20, marginBottom: 8 }]}>💳 Paid — Credit Card Required</Text>
-      {[
-        { name: 'OpenRouter',   url: 'openrouter.ai/keys' },
-        { name: 'Hugging Face', url: 'huggingface.co/settings/tokens' },
-        { name: 'Cohere',       url: 'dashboard.cohere.com' },
-        { name: 'Cloudflare',   url: 'dash.cloudflare.com', hint: 'Key format: accountID:apiToken' },
-        { name: 'Claude',       url: 'console.anthropic.com' },
-      ].map(({ name, url }) => (
-        <TouchableOpacity key={name} style={s.keyRow} onPress={() => Linking.openURL(`https://${url}`)}>
-          <Text style={s.providerName}>{name}</Text>
-          <Text style={s.teal}>{url} ›</Text>
-        </TouchableOpacity>
-      ))}
+      {PAID_KEY_PROVIDERS.map(pk => {
+        const p = PROVIDERS[pk];
+        return (
+          <TouchableOpacity key={pk} style={s.keyRow} onPress={() => Linking.openURL(`https://${p.instructionsUrl}`)}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.providerName}>{p.name}</Text>
+              {p.keyHint && <Text style={[s.hint, { marginBottom: 0, marginTop: 2 }]}>{p.keyHint}</Text>}
+            </View>
+            <Text style={s.teal}>{p.instructionsUrl} ›</Text>
+          </TouchableOpacity>
+        );
+      })}
+
       <Text style={[s.subTitle, { marginTop: 24, marginBottom: 8 }]}>Adding a key</Text>
       <Text style={s.bodyText}>
         From your laptop:{'\n'}

@@ -49,6 +49,7 @@ export interface Provider {
   goodAt: string;
   notGreatAt: string;
   supportsVision: boolean;
+  instructionsUrl: string;     // URL shown in "How to Get Keys" screen
   extraHeaders?: Record<string, string>; // Extra headers sent with every request
   keyHint?: string;            // Shown in API Keys screen to explain key format
 }
@@ -73,6 +74,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Fastest responses of any provider',
     notGreatAt: 'Deep reasoning or long-form writing',
     supportsVision: false,
+    instructionsUrl: 'cloud.cerebras.ai',
   },
 
   groq: {
@@ -91,6 +93,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Fast, reliable general Q&A and summarisation',
     notGreatAt: 'Complex coding or nuanced creative writing',
     supportsVision: false,
+    instructionsUrl: 'console.groq.com',
   },
 
   gemini: {
@@ -109,6 +112,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Long documents, translation, and image understanding (vision)',
     notGreatAt: 'Can be slower than Groq/Cerebras for simple questions',
     supportsVision: true,
+    instructionsUrl: 'aistudio.google.com',
   },
 
   mistral: {
@@ -127,6 +131,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Code generation, creative writing, detailed instructions',
     notGreatAt: 'Slightly slower than Groq for simple questions',
     supportsVision: false,
+    instructionsUrl: 'console.mistral.ai',
   },
 
   sambanova: {
@@ -144,6 +149,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Deep reasoning and nuanced answers',
     notGreatAt: 'Speed — larger model means slower responses',
     supportsVision: false,
+    instructionsUrl: 'cloud.sambanova.ai',
   },
 
   openrouter: {
@@ -165,6 +171,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Access to hundreds of models — free and paid — with one key',
     notGreatAt: 'Free models have rate limits; quality varies by model',
     supportsVision: false,
+    instructionsUrl: 'openrouter.ai/keys',
     extraHeaders: {
       'HTTP-Referer': 'https://stevepleasants.com/manyai',
       'X-Title': 'ManyAI',
@@ -187,6 +194,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Runs on Cloudflare edge — fast and free tier available',
     notGreatAt: 'Smaller model selection than other providers',
     supportsVision: false,
+    instructionsUrl: 'dash.cloudflare.com',
     keyHint: 'Enter as accountID:apiToken',
   },
 
@@ -207,6 +215,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Massive model selection — thousands of open models available',
     notGreatAt: 'Free tier is rate limited; cold starts can be slow',
     supportsVision: false,
+    instructionsUrl: 'huggingface.co/settings/tokens',
   },
 
   cohere: {
@@ -226,6 +235,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Strong at summarization, retrieval, and business tasks',
     notGreatAt: 'Less well-known — smaller community than OpenAI/Meta models',
     supportsVision: false,
+    instructionsUrl: 'dashboard.cohere.com',
   },
 
   // ── Paid (credit card required) ────────────────────────────────────────────
@@ -246,6 +256,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Strong coding with DeepSeek V3',
     notGreatAt: 'Requires credit card; can return verbose responses',
     supportsVision: false,
+    instructionsUrl: 'fireworks.ai',
   },
 
   openai: {
@@ -264,6 +275,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Well-rounded — coding, vision, instruction following',
     notGreatAt: 'Costs money; rate limits on lower tiers',
     supportsVision: true,
+    instructionsUrl: 'platform.openai.com',
   },
 
   anthropic: {
@@ -283,6 +295,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'Exceptional reasoning, coding, and long-form writing',
     notGreatAt: 'Costs money; no free tier',
     supportsVision: true,
+    instructionsUrl: 'console.anthropic.com',
   },
 
   // ── No key required ────────────────────────────────────────────────────────
@@ -304,6 +317,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     goodAt: 'No API key needed — always available as a fallback',
     notGreatAt: 'Less reliable, variable quality',
     supportsVision: false,
+    instructionsUrl: 'pollinations.ai',
   },
 };
 
