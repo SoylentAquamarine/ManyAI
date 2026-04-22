@@ -223,11 +223,11 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
   cohere: {
     key: 'cohere',
     name: 'Cohere',
-    model: 'command-r',
+    model: 'command-r-08-2024',
     models: [
-      { id: 'command-r',          name: 'Command R' },
-      { id: 'command-r-plus',     name: 'Command R+ (best quality)' },
-      { id: 'command-a-03-2025',  name: 'Command A (newest)' },
+      { id: 'command-r-08-2024',      name: 'Command R (2024)' },
+      { id: 'command-r-plus-08-2024', name: 'Command R+ (2024)' },
+      { id: 'command-a-03-2025',      name: 'Command A (newest)' },
     ],
     baseUrl: 'https://api.cohere.com/compatibility/v1',
     needsKey: true,

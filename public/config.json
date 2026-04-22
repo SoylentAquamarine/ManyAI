@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "providers": {
     "cerebras": {
       "model": "llama3.1-8b",
@@ -126,15 +126,15 @@
       ]
     },
     "cohere": {
-      "model": "command-r",
+      "model": "command-r-08-2024",
       "models": [
         {
-          "id": "command-r",
-          "name": "Command R"
+          "id": "command-r-08-2024",
+          "name": "Command R (2024)"
         },
         {
-          "id": "command-r-plus",
-          "name": "Command R+ (best quality)"
+          "id": "command-r-plus-08-2024",
+          "name": "Command R+ (2024)"
         },
         {
           "id": "command-a-03-2025",
