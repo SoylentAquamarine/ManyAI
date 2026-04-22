@@ -432,11 +432,13 @@ export default function SettingsScreen() {
   );
 
   if (screen === 'providers') return (
-    // KeyboardAvoidingView fixes the compare input being covered by keyboard on Android
+    // KeyboardAvoidingView lifts content above the keyboard.
+    // 'padding' is used on both platforms — 'height' on Android leaves a
+    // residual grey bar after the keyboard dismisses until the next re-render.
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'android' ? 80 : 0}
+      style={{ flex: 1, backgroundColor: '#0f0e17' }}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
     >
       <ScrollView style={s.container} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         <View style={s.subHeader}>

@@ -23,7 +23,8 @@ PROVIDER_META = {
     "sambanova":   {"base_url": "https://api.sambanova.ai/v1",                      "type": "openai"},
     "openrouter":  {"base_url": "https://openrouter.ai/api/v1",                     "type": "openai",
                     "extra_headers": {"HTTP-Referer": "https://stevepleasants.com/manyai", "X-Title": "ManyAI"}},
-    "huggingface": {"base_url": "https://router.huggingface.co/hf-inference/v1",    "type": "openai"},
+    "cloudflare":  {"base_url": None,                                                "type": "cloudflare"},
+    "huggingface": {"base_url": "https://router.huggingface.co/v1",                 "type": "openai"},
     "cohere":      {"base_url": "https://api.cohere.com/compatibility/v1",          "type": "openai"},
     "fireworks":   {"base_url": "https://api.fireworks.ai/inference/v1",            "type": "openai"},
     "openai":      {"base_url": "https://api.openai.com/v1",                        "type": "openai"},
@@ -38,6 +39,7 @@ KEY_ENV = {
     "mistral":     "MISTRAL_API_KEY",
     "sambanova":   "SAMBANOVA_API_KEY",
     "openrouter":  "OPENROUTER_API_KEY",
+    "cloudflare":  "CLOUDFLARE_API_KEY",
     "huggingface": "HUGGINGFACE_API_KEY",
     "cohere":      "COHERE_API_KEY",
     "fireworks":   "FIREWORKS_API_KEY",
@@ -106,6 +108,17 @@ def test_model(provider_key, model):
             r = requests.post(f"{base}/messages", headers=headers, json=body, timeout=TIMEOUT)
             r.raise_for_status()
             content = r.json()["content"][0]["text"].strip()[:80]
+
+        elif ptype == "cloudflare":
+            # Key format: "accountId:apiToken"
+            account_id, api_token = (key or ":").split(":", 1)
+            url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions"
+            headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+            body = {"model": model, "max_tokens": 16,
+                    "messages": [{"role": "user", "content": PROMPT}]}
+            r = requests.post(url, headers=headers, json=body, timeout=TIMEOUT)
+            r.raise_for_status()
+            content = r.json()["choices"][0]["message"]["content"].strip()[:80]
 
         else:  # openai-compatible
             headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json",
