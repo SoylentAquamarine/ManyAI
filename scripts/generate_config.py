@@ -126,5 +126,5 @@ with open(CONFIG_JSON, 'w', encoding='utf-8') as f:
     json.dump(new_config, f, indent=2, ensure_ascii=False)
     f.write('\n')
 
-print(f"public/config.json updated: version {current_version} → {new_version}")
+print(f"public/config.json updated: version {current_version} -> {new_version}")
 sys.exit(1)  # Signal to CI that a change was made
