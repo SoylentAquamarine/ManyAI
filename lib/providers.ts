@@ -64,7 +64,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     model: 'llama3.1-8b',
     models: [
       { id: 'llama3.1-8b',  name: 'Llama 3.1 8B (fastest)' },
-      { id: 'llama3.3-70b', name: 'Llama 3.3 70B (smarter)' },
+      { id: 'llama-3.3-70b', name: 'Llama 3.3 70B (smarter)' },
     ],
     baseUrl: 'https://api.cerebras.ai/v1',
     needsKey: true,
@@ -203,7 +203,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     models: [
       { id: 'Qwen/Qwen2.5-72B-Instruct',          name: 'Qwen 2.5 72B' },
       { id: 'meta-llama/Llama-3.1-8B-Instruct',   name: 'Llama 3.1 8B' },
-      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B' },
+      { id: 'HuggingFaceH4/zephyr-7b-beta',        name: 'Zephyr 7B' },
     ],
     baseUrl: 'https://router.huggingface.co/v1',
     needsKey: true,
