@@ -53,29 +53,37 @@ jobs:
           FIREWORKS_API_KEY:   ${{ secrets.FIREWORKS_API_KEY }}
           OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          CLOUDFLARE_API_KEY:  ${{ secrets.CLOUDFLARE_API_KEY }}
         run: python scripts/test_models.py
 
-      # ── Patch providers.ts if anything is dead ───────────────────────────────
+      # ── Patch providers.ts if any models are permanently dead ────────────────
       - name: Patch providers.ts (remove dead models)
         id: patch
         run: |
           python scripts/patch_providers.py
           echo "changed=$?" >> $GITHUB_OUTPUT
-        # patch_providers.py exits 1 if changes were made, 0 if nothing changed.
-        # We capture the exit code but don't fail the job on exit 1.
+        # exit 1 = changes made, exit 0 = nothing changed — don't fail the job
         continue-on-error: true
 
-      # ── Commit + push the updated file ──────────────────────────────────────
-      - name: Commit updated providers.ts
-        if: steps.patch.outputs.changed == '1'
+      # ── Always regenerate public/config.json from providers.ts ───────────────
+      - name: Regenerate public/config.json
+        id: genconfig
+        run: |
+          python scripts/generate_config.py
+          echo "changed=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      # ── Commit + push if anything changed ────────────────────────────────────
+      - name: Commit updated files
+        if: steps.patch.outputs.changed == '1' || steps.genconfig.outputs.changed == '1'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add lib/providers.ts
-          git commit -m "chore: remove deprecated models (weekly auto-check)"
+          git add lib/providers.ts public/config.json
+          git commit -m "chore: sync providers and config (weekly auto-check)"
           git push
 
-      # ── Push OTA update via EAS ──────────────────────────────────────────────
+      # ── Push OTA only when providers.ts changed (dead models removed) ────────
       - name: Push OTA update
         if: steps.patch.outputs.changed == '1'
         env:
@@ -90,13 +98,18 @@ jobs:
           echo "## Weekly Model Health Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.patch.outputs.changed }}" == "1" ]; then
-            echo "**Changes made:** Dead models removed and OTA update pushed." >> $GITHUB_STEP_SUMMARY
+            echo "**providers.ts:** Dead models removed — OTA update pushed." >> $GITHUB_STEP_SUMMARY
           else
-            echo "**No changes:** All models passed (or failures were transient). providers.ts unchanged." >> $GITHUB_STEP_SUMMARY
+            echo "**providers.ts:** No changes — all models alive." >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.genconfig.outputs.changed }}" == "1" ]; then
+            echo "**config.json:** Regenerated and committed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**config.json:** Already up to date." >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test results" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           python -c "
           import json
           with open('scripts/test_results.json') as f:

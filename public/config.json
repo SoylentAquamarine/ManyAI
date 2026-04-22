@@ -1,0 +1,103 @@
+{
+  "version": 4,
+  "providers": {
+    "cerebras": {
+      "model": "llama3.1-8b",
+      "models": [
+        { "id": "llama3.1-8b",  "name": "Llama 3.1 8B (fastest)" },
+        { "id": "llama3.3-70b", "name": "Llama 3.3 70B (smarter)" }
+      ]
+    },
+    "groq": {
+      "model": "llama-3.1-8b-instant",
+      "models": [
+        { "id": "llama-3.1-8b-instant",   "name": "Llama 3.1 8B (fast)" },
+        { "id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B" }
+      ]
+    },
+    "gemini": {
+      "model": "gemini-2.5-flash-lite",
+      "models": [
+        { "id": "gemini-2.5-flash-lite", "name": "Gemini 2.5 Flash Lite (fast)" },
+        { "id": "gemini-2.5-flash",      "name": "Gemini 2.5 Flash (best quality)" }
+      ]
+    },
+    "mistral": {
+      "model": "mistral-small-latest",
+      "models": [
+        { "id": "mistral-small-latest", "name": "Mistral Small" },
+        { "id": "mistral-large-latest", "name": "Mistral Large (best quality)" }
+      ]
+    },
+    "sambanova": {
+      "model": "Meta-Llama-3.3-70B-Instruct",
+      "models": [
+        { "id": "Meta-Llama-3.3-70B-Instruct", "name": "Llama 3.3 70B" }
+      ]
+    },
+    "openrouter": {
+      "model": "meta-llama/llama-3.3-70b-instruct:free",
+      "models": [
+        { "id": "meta-llama/llama-3.3-70b-instruct:free", "name": "Llama 3.3 70B (free)" },
+        { "id": "google/gemma-3-27b-it:free",              "name": "Gemma 3 27B (free)" },
+        { "id": "openai/gpt-oss-20b:free",                 "name": "OpenAI OSS 20B (free)" },
+        { "id": "qwen/qwen3-coder:free",                   "name": "Qwen3 Coder 480B (free)" },
+        { "id": "meta-llama/llama-3.3-70b-instruct",       "name": "Llama 3.3 70B (paid)" },
+        { "id": "anthropic/claude-3.5-sonnet",             "name": "Claude 3.5 Sonnet (paid)" }
+      ]
+    },
+    "cloudflare": {
+      "model": "@cf/meta/llama-3.1-8b-instruct",
+      "models": [
+        { "id": "@cf/meta/llama-3.1-8b-instruct",           "name": "Llama 3.1 8B" },
+        { "id": "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "name": "Llama 3.3 70B (fast)" }
+      ]
+    },
+    "huggingface": {
+      "model": "Qwen/Qwen2.5-72B-Instruct",
+      "models": [
+        { "id": "Qwen/Qwen2.5-72B-Instruct",          "name": "Qwen 2.5 72B" },
+        { "id": "meta-llama/Llama-3.1-8B-Instruct",   "name": "Llama 3.1 8B" },
+        { "id": "mistralai/Mistral-7B-Instruct-v0.3", "name": "Mistral 7B" }
+      ]
+    },
+    "cohere": {
+      "model": "command-r",
+      "models": [
+        { "id": "command-r",         "name": "Command R" },
+        { "id": "command-r-plus",    "name": "Command R+ (best quality)" },
+        { "id": "command-a-03-2025", "name": "Command A (newest)" }
+      ]
+    },
+    "fireworks": {
+      "model": "accounts/fireworks/models/deepseek-v3p1",
+      "models": [
+        { "id": "accounts/fireworks/models/deepseek-v3p1",           "name": "DeepSeek V3" },
+        { "id": "accounts/fireworks/models/llama-v3p3-70b-instruct", "name": "Llama 3.3 70B" }
+      ]
+    },
+    "openai": {
+      "model": "gpt-4o-mini",
+      "models": [
+        { "id": "gpt-4o-mini", "name": "GPT-4o Mini (fast)" },
+        { "id": "gpt-4o",      "name": "GPT-4o (best quality)" }
+      ]
+    },
+    "anthropic": {
+      "model": "claude-3-5-haiku-20241022",
+      "models": [
+        { "id": "claude-3-5-haiku-20241022",  "name": "Claude 3.5 Haiku (fast)" },
+        { "id": "claude-3-5-sonnet-20241022", "name": "Claude 3.5 Sonnet (best)" },
+        { "id": "claude-3-opus-20240229",     "name": "Claude 3 Opus (most capable)" }
+      ]
+    },
+    "pollinations": {
+      "model": "openai",
+      "models": [
+        { "id": "openai",  "name": "OpenAI (via Pollinations)" },
+        { "id": "mistral", "name": "Mistral (via Pollinations)" },
+        { "id": "llama",   "name": "Llama (via Pollinations)" }
+      ]
+    }
+  }
+}

@@ -10,7 +10,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CONFIG_URL = 'https://stevepleasants.com/manyai/config.json';
+const CONFIG_URL = 'https://raw.githubusercontent.com/SoylentAquamarine/ManyAI/main/public/config.json';
 const CACHE_KEY  = 'manyai_remote_config_v1';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
