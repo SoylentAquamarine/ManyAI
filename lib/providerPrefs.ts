@@ -61,7 +61,18 @@ export async function loadSelectedModels(): Promise<Record<ProviderKey, string>>
   const raw = await SecureStore.getItemAsync(MODELS_KEY);
   if (!raw) return defaults;
   try {
-    return { ...defaults, ...JSON.parse(raw) };
+    const stored = JSON.parse(raw) as Partial<Record<ProviderKey, string>>;
+    const merged = { ...defaults };
+    for (const k of ROUTING_ORDER) {
+      const storedModel = stored[k];
+      // Only keep a stored selection if it still exists in the provider's model list.
+      // This automatically discards retired model IDs (e.g. command-r, llama-3.1-8b:free)
+      // so they never cause 404/410 errors after a model update.
+      if (storedModel && PROVIDERS[k].models.some(m => m.id === storedModel)) {
+        merged[k] = storedModel;
+      }
+    }
+    return merged;
   } catch {
     return defaults;
   }

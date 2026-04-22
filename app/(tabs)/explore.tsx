@@ -436,7 +436,7 @@ export default function SettingsScreen() {
     // 'padding' is used on both platforms — 'height' on Android leaves a
     // residual grey bar after the keyboard dismisses until the next re-render.
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#0f0e17' }}
+      style={{ flex: 1, backgroundColor: '#1a1a2e' }}
       behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
     >
