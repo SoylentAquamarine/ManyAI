@@ -64,7 +64,7 @@ export const PROVIDERS: Record<ProviderKey, Provider> = {
     model: 'llama3.1-8b',
     models: [
       { id: 'llama3.1-8b',  name: 'Llama 3.1 8B (fastest)' },
-      { id: 'llama-3.3-70b', name: 'Llama 3.3 70B (smarter)' },
+      { id: 'gpt-oss-120b', name: 'GPT-OSS 120B (smarter)' },
     ],
     baseUrl: 'https://api.cerebras.ai/v1',
     needsKey: true,
