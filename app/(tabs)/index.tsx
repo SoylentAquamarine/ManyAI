@@ -453,20 +453,14 @@ export default function ChatScreen() {
           </Text>
           {!item.error && (
             <View style={styles.bubbleActions}>
-              {/* Generated image — Save to device and Share */}
+              {/* Share button — image or text */}
               {item.generatedImageUri ? (
-                <>
-                  <TouchableOpacity onPress={() => saveImageToDevice(item.generatedImageUri!)}>
-                    <Text style={styles.actionBtnText}>Save</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => shareImage(item.generatedImageUri!)}>
-                    <Text style={styles.actionBtnText}>Share</Text>
-                  </TouchableOpacity>
-                </>
+                <TouchableOpacity onPress={() => shareImage(item.generatedImageUri!)}>
+                  <Text style={styles.saveBtnText}>Share</Text>
+                </TouchableOpacity>
               ) : (
-                /* Text response — share the text */
                 <TouchableOpacity onPress={() => shareText(item.content)}>
-                  <Text style={styles.actionBtnText}>Share</Text>
+                  <Text style={styles.saveBtnText}>Share</Text>
                 </TouchableOpacity>
               )}
               {/* Save to app — always available */}
