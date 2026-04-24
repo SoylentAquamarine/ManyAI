@@ -19,15 +19,15 @@ import { useFocusEffect, useNavigation } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { loadKey, saveKey, deleteKey } from '@/lib/keyStore';
-import { PROVIDERS, ROUTING_ORDER, ProviderKey, ProviderModel } from '@/lib/providers';
-import { getRemoteConfig, RemoteConfig } from '@/lib/remoteConfig';
-import { testProvider, callProvider } from '@/lib/callProvider';
+import { loadKey, saveKey, deleteKey } from '@/lib/providers/keyStore';
+import { PROVIDERS, ROUTING_ORDER, ProviderKey, ProviderModel } from '@/lib/providers/providers';
+import { getRemoteConfig, RemoteConfig } from '@/lib/providers/remoteConfig';
+import { testProvider, callProvider } from '@/lib/providers/callProvider';
 import {
   loadProviderOrder, saveProviderOrder,
   loadEnabledProviders, saveEnabledProviders,
   loadSelectedModels, saveSelectedModels,
-} from '@/lib/providerPrefs';
+} from '@/lib/providers/providerPrefs';
 
 const FREE_KEY_PROVIDERS: ProviderKey[] = ROUTING_ORDER.filter(k => k !== 'pollinations' && !PROVIDERS[k].paidOnly);
 const PAID_KEY_PROVIDERS: ProviderKey[] = ROUTING_ORDER.filter(k => PROVIDERS[k].paidOnly);

@@ -14,13 +14,13 @@ import {
   View, Text, TouchableOpacity, ScrollView, StyleSheet,
   Alert, TextInput, Modal, Image,
 } from 'react-native';
-import { shareText, shareImage, saveImageToDevice } from '@/lib/shareUtils';
+import { shareText, shareImage, saveImageToDevice } from '@/lib/saved/shareUtils';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   SavedResponse, loadAllResponses, loadCategories, deleteResponse,
   updateResponse, addCategory, deleteCategory, saveCategories,
-} from '@/lib/savedResponses';
-import { setRefineSeed } from '@/lib/refineSeed';
+} from '@/lib/saved/savedResponses';
+import { setRefineSeed } from '@/lib/saved/refineSeed';
 
 export default function SavedScreen() {
   const router = useRouter();

@@ -21,18 +21,18 @@ import {
 import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { loadAllKeys } from '@/lib/keyStore';
-import { pickProvider, PROVIDERS, ROUTING_ORDER, ProviderKey } from '@/lib/providers';
-import { callProvider } from '@/lib/callProvider';
-import { loadProviderOrder, loadEnabledProviders, loadSelectedModels } from '@/lib/providerPrefs';
-import { saveResponse, loadCategories } from '@/lib/savedResponses';
-import { shareText, shareImage, saveImageToDevice } from '@/lib/shareUtils';
-import { HistoryMessage } from '@/lib/callProvider';
-import { consumeRefineSeed } from '@/lib/refineSeed';
+import { loadAllKeys } from '@/lib/providers/keyStore';
+import { pickProvider, PROVIDERS, ROUTING_ORDER, ProviderKey } from '@/lib/providers/providers';
+import { callProvider } from '@/lib/providers/callProvider';
+import { loadProviderOrder, loadEnabledProviders, loadSelectedModels } from '@/lib/providers/providerPrefs';
+import { saveResponse, loadCategories } from '@/lib/saved/savedResponses';
+import { shareText, shareImage, saveImageToDevice } from '@/lib/saved/shareUtils';
+import { HistoryMessage } from '@/lib/providers/callProvider';
+import { consumeRefineSeed } from '@/lib/saved/refineSeed';
 import {
   isImageGenRequest, callImageProvider, IMAGE_PROVIDERS,
   imageProviderName, imageProviderNeedsKey,
-} from '@/lib/imageGen';
+} from '@/lib/providers/imageGen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
