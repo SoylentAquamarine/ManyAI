@@ -152,6 +152,8 @@ Free to use, study, and modify. If you distribute a modified version — includi
 
 **GitHub Pages**
 - Created and launched: [soylentaquamarine.github.io/ManyAI](https://soylentaquamarine.github.io/ManyAI/)
+- Expanded from a placeholder to a full product page: hero with Google Play and beta testing links, 9-card feature grid, full providers table with free/paid tiers, weekly model-verification note, getting started / beta instructions, complete FAQ, built-with tech stack, donate section, and GPL v3 license box
+- Content migrated from the StevePleasants.com ManyAI page and redesigned in the dark theme consistent with the rest of the GitHub Pages network
 
 ### 2026-04-24
 
