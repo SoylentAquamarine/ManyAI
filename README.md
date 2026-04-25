@@ -148,6 +148,11 @@ Free to use, study, and modify. If you distribute a modified version — includi
 
 ## Changelog
 
+### 2026-04-25
+
+**GitHub Pages**
+- Created and launched: [soylentaquamarine.github.io/ManyAI](https://soylentaquamarine.github.io/ManyAI/)
+
 ### 2026-04-24
 
 **Image generation + share utilities + library restructure**
