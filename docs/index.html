@@ -8,14 +8,17 @@
     :root {
       --bg: #0f0f1a;
       --surface: #16213e;
+      --surface2: #0f3460;
       --accent: #4ecdc4;
       --accent2: #ff6b6b;
       --text: #e0e0e0;
       --dim: #888;
       --border: #2a2a4a;
+      --free: #2ecc71;
+      --paid: #e74c3c;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.65; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
@@ -26,96 +29,133 @@
     }
     header h1 { font-size: 3.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
     header h1 span { color: var(--accent); }
-    header p.tagline { font-size: 1.2rem; color: var(--dim); max-width: 500px; margin: 0 auto 32px; }
-    .badge-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    header p.tagline { font-size: 1.2rem; color: var(--dim); max-width: 560px; margin: 0 auto 12px; }
+    header p.sub { font-size: 0.95rem; color: var(--dim); max-width: 580px; margin: 0 auto 32px; }
+    .badge-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
     .badge { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; font-size: 0.9rem; }
     .badge strong { color: var(--accent); }
+    .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: var(--accent); color: #0f0f1a; font-weight: 700; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-size: 1rem; }
+    .btn-primary:hover { background: #3ab8b0; text-decoration: none; }
+    .btn-secondary { background: transparent; color: var(--accent); font-weight: 700; padding: 12px 30px; border-radius: 30px; text-decoration: none; font-size: 1rem; border: 2px solid var(--accent); }
+    .btn-secondary:hover { background: rgba(78,205,196,0.1); text-decoration: none; }
 
-    section { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
+    .divider { border: none; border-top: 1px solid var(--border); }
+    section { max-width: 940px; margin: 0 auto; padding: 60px 20px; }
     h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 24px; }
     h2 span { color: var(--accent); }
 
     .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .feature-card .icon { font-size: 2rem; margin-bottom: 12px; }
-    .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
-    .feature-card p { font-size: 0.875rem; color: var(--dim); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .card .icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .card p { font-size: 0.875rem; color: var(--dim); }
 
-    .providers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-    .provider-pill {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 0.85rem;
-    }
-    .provider-pill .name { font-weight: 600; margin-bottom: 2px; }
-    .provider-pill .sub { color: var(--dim); font-size: 0.75rem; }
-    .free-tag { color: var(--accent); font-size: 0.7rem; font-weight: 700; background: rgba(78,205,196,0.12); padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+    .providers-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .providers-table th { background: var(--surface2); color: var(--accent); padding: 12px 16px; text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .providers-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); }
+    .providers-table tr:hover td { background: var(--surface); }
+    .providers-table .section-header td { background: var(--surface2); color: var(--accent); font-weight: 700; font-size: 0.8rem; padding: 8px 16px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .free-badge { color: var(--free); font-weight: 600; }
+    .paid-badge { color: var(--paid); font-size: 0.85rem; }
 
-    .steps { display: flex; flex-direction: column; gap: 16px; counter-reset: steps; }
-    .step { display: flex; gap: 16px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; counter-increment: steps; }
-    .step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #000; font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .step p { font-size: 0.9rem; color: var(--dim); margin-top: 4px; }
+    .beta-box { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 28px 32px; text-align: center; }
+    .beta-box h3 { color: var(--accent); margin-bottom: 12px; font-size: 1.2rem; }
+    .beta-box ol { text-align: left; display: inline-block; margin: 16px 0; line-height: 2.2; color: var(--dim); }
+    .beta-box ol a { color: var(--accent); font-weight: 600; }
+
+    .note-box { background: var(--surface); border-left: 4px solid var(--accent); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 24px 0; color: var(--dim); font-size: 0.92rem; }
+    .note-box strong { color: var(--text); }
+
+    .faq dt { font-weight: 700; color: var(--text); margin-top: 28px; margin-bottom: 8px; font-size: 1rem; }
+    .faq dd { margin: 0 0 4px 20px; color: var(--dim); line-height: 1.75; }
+    .faq dd ul, .faq dd strong { color: var(--dim); }
+    .faq dd strong { color: var(--text); }
+    .faq dd a { color: var(--accent); }
+
+    .tech-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 20px; }
+    .tech-pill { background: var(--surface); border: 1px solid var(--accent); color: var(--accent); border-radius: 20px; padding: 6px 16px; font-size: 0.85rem; font-weight: 600; }
+
+    .donate-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px 32px; margin: 32px 0; text-align: center; }
+    .donate-box h3 { color: var(--accent); margin-bottom: 10px; font-size: 1.2rem; }
+    .donate-box p { color: var(--dim); margin-bottom: 18px; }
+    .donate-links { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .donate-links a { background: var(--accent); color: #0f0f1a; font-weight: 700; padding: 10px 24px; border-radius: 24px; text-decoration: none; font-size: 0.9rem; }
+    .donate-links a:hover { background: #3ab8b0; }
+
+    .license-box { background: var(--surface); border-left: 4px solid var(--surface2); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 24px 0; font-size: 0.9rem; color: var(--dim); }
+    .license-box strong { color: var(--text); }
 
     footer { text-align: center; padding: 40px 20px; border-top: 1px solid var(--border); color: var(--dim); font-size: 0.85rem; }
-
-    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
-    .tip { background: rgba(78,205,196,0.08); border: 1px solid rgba(78,205,196,0.25); border-radius: 8px; padding: 14px 18px; font-size: 0.875rem; margin-top: 24px; }
-    .tip strong { color: var(--accent); }
   </style>
 </head>
 <body>
 
 <header>
   <h1>Many<span>AI</span></h1>
-  <p class="tagline">Never run out of AI. Automatically routes to the best free provider for every question.</p>
+  <p class="tagline">Never run out of AI. Always free.</p>
+  <p class="sub">ManyAI is a mobile AI router for Android and iOS. It automatically picks the best available free AI provider for each question, falls back silently when one fails, and keeps every API key encrypted on your device. No ads. No banners. No subscriptions. Ever.</p>
   <div class="badge-row">
     <div class="badge">📱 Android &amp; iOS</div>
     <div class="badge">🆓 <strong>Free forever</strong> — no ads, no subscriptions</div>
-    <div class="badge">🔑 13 providers</div>
+    <div class="badge">🔑 13 AI providers</div>
+    <div class="badge">🔒 Keys stay on your device</div>
+  </div>
+  <div class="btn-row">
+    <a href="https://play.google.com/store/apps/details?id=com.soylentaquamarine.manyai" class="btn-primary">Download on Google Play</a>
+    <a href="https://groups.google.com/g/manyai-testing" class="btn-secondary">Join Beta Testing</a>
   </div>
 </header>
 
 <hr class="divider">
 
 <section>
-  <h2>What it <span>does</span></h2>
+  <h2>Key <span>Features</span></h2>
   <div class="features">
-    <div class="feature-card">
+    <div class="card">
       <div class="icon">🔀</div>
-      <h3>Smart routing</h3>
-      <p>Automatically picks the best available free provider for each task type — fastest for quick questions, most capable for reasoning.</p>
+      <h3>Multi-Provider Routing</h3>
+      <p>Automatically picks the best provider and falls back silently on failure, rate limits, or downtime. You always get an answer.</p>
     </div>
-    <div class="feature-card">
-      <div class="icon">⚡</div>
-      <h3>Silent fallback</h3>
-      <p>If a provider fails, hits a rate limit, or times out, ManyAI silently tries the next one. You never see the error.</p>
+    <div class="card">
+      <div class="icon">🎨</div>
+      <h3>AI Image Generation</h3>
+      <p>Just ask naturally — "draw me a sunset" — and ManyAI routes it to an image-capable AI automatically.</p>
     </div>
-    <div class="feature-card">
-      <div class="icon">🔑</div>
-      <h3>Your keys, your device</h3>
-      <p>All API keys are encrypted using your device's secure enclave. Nothing ever reaches a ManyAI server.</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">📊</div>
-      <h3>Compare mode</h3>
-      <p>Send the same prompt to all providers at once and compare responses side by side.</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">📷</div>
-      <h3>Vision support</h3>
-      <p>Attach photos or use your camera — automatically routed to vision-capable providers (Gemini, OpenAI).</p>
-    </div>
-    <div class="feature-card">
+    <div class="card">
       <div class="icon">💾</div>
-      <h3>Save responses</h3>
-      <p>Save any AI response to a custom category — Recipes, Code, Research, Ideas, and more.</p>
+      <h3>Save &amp; Organize</h3>
+      <p>Save any response to a custom category — Recipes, Code, Research, Ideas, and more. Rename, edit, share, or refine any time.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📷</div>
+      <h3>Vision Support</h3>
+      <p>Attach a photo or take one with your camera. Vision-capable providers like Gemini and OpenAI will analyze it.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔑</div>
+      <h3>Your Keys, Your Device</h3>
+      <p>API keys are stored encrypted using the OS secure enclave. Nothing is ever sent to a ManyAI server.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⚙️</div>
+      <h3>Full Provider Control</h3>
+      <p>Enable or disable providers, reorder priorities, and choose which model each one uses.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📊</div>
+      <h3>Compare Mode</h3>
+      <p>Send the same prompt to all providers at once and compare responses side by side. See which AI gives the best answer.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📖</div>
+      <h3>Built-In Setup Guide</h3>
+      <p>Step-by-step instructions for getting free API keys from every supported provider — right inside the app.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🌙</div>
+      <h3>Dark Theme</h3>
+      <p>Easy on the eyes, built in from day one.</p>
     </div>
   </div>
 </section>
@@ -124,20 +164,103 @@
 
 <section>
   <h2>13 <span>Providers</span></h2>
-  <div class="providers-grid">
-    <div class="provider-pill"><div class="name">Cerebras <span class="free-tag">FREE</span></div><div class="sub">Fastest · Llama 3.1 8B</div></div>
-    <div class="provider-pill"><div class="name">Groq <span class="free-tag">FREE</span></div><div class="sub">Fast · Llama 3.1 8B</div></div>
-    <div class="provider-pill"><div class="name">Gemini <span class="free-tag">FREE</span></div><div class="sub">Vision · 2.5 Flash Lite</div></div>
-    <div class="provider-pill"><div class="name">Mistral <span class="free-tag">FREE</span></div><div class="sub">Coding · Mistral Small</div></div>
-    <div class="provider-pill"><div class="name">SambaNova <span class="free-tag">FREE</span></div><div class="sub">Reasoning · Llama 3.3 70B</div></div>
-    <div class="provider-pill"><div class="name">Fireworks <span class="free-tag">FREE</span></div><div class="sub">Coding · DeepSeek V3</div></div>
-    <div class="provider-pill"><div class="name">Cloudflare <span class="free-tag">FREE</span></div><div class="sub">Edge · Llama 3.1 8B</div></div>
-    <div class="provider-pill"><div class="name">Pollinations <span class="free-tag">FREE</span></div><div class="sub">No key needed · fallback</div></div>
-    <div class="provider-pill"><div class="name">OpenRouter</div><div class="sub">Hundreds of models</div></div>
-    <div class="provider-pill"><div class="name">HuggingFace</div><div class="sub">Open-source · Qwen 72B</div></div>
-    <div class="provider-pill"><div class="name">Cohere</div><div class="sub">Summarization · Command R</div></div>
-    <div class="provider-pill"><div class="name">OpenAI</div><div class="sub">GPT-4o · Vision</div></div>
-    <div class="provider-pill"><div class="name">Anthropic</div><div class="sub">Claude 3.5 · Reasoning</div></div>
+  <p style="color:var(--dim);font-size:0.9rem;margin-bottom:20px;">ManyAI works with 13 AI providers out of the box. Each has different strengths — ManyAI picks the right one automatically. Models are verified weekly and updated automatically when providers deprecate them.</p>
+  <table class="providers-table">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Default Model</th>
+        <th>Best For</th>
+        <th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="section-header"><td colspan="4">🟢 Always Free — no key required</td></tr>
+      <tr>
+        <td><strong>Pollinations</strong></td>
+        <td>OpenAI (via Pollinations)</td>
+        <td>No key needed — always available as a fallback</td>
+        <td class="free-badge">✓ No key needed</td>
+      </tr>
+      <tr class="section-header"><td colspan="4">🟢 Free API Tier — no credit card required</td></tr>
+      <tr>
+        <td><strong>Cerebras</strong></td>
+        <td>Llama 3.1 8B</td>
+        <td>Speed — fastest responses of any provider</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr>
+        <td><strong>Groq</strong></td>
+        <td>Llama 3.1 8B</td>
+        <td>Fast, reliable general Q&amp;A</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr>
+        <td><strong>Gemini</strong></td>
+        <td>Gemini 2.5 Flash Lite</td>
+        <td>Vision, translation, long documents (1M context)</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr>
+        <td><strong>Mistral</strong></td>
+        <td>Mistral Small</td>
+        <td>Code generation, creative writing</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr>
+        <td><strong>SambaNova</strong></td>
+        <td>Llama 3.3 70B</td>
+        <td>Deep reasoning, highest quality free model</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr>
+        <td><strong>Fireworks</strong></td>
+        <td>DeepSeek V3</td>
+        <td>Strong coding with DeepSeek V3</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr>
+        <td><strong>OpenAI</strong></td>
+        <td>GPT-4o Mini</td>
+        <td>Vision, general purpose, well-rounded</td>
+        <td class="free-badge">✓ Free tier</td>
+      </tr>
+      <tr>
+        <td><strong>Cloudflare AI</strong></td>
+        <td>Llama 3.1 8B</td>
+        <td>Edge-hosted, fast, no credit card required</td>
+        <td class="free-badge">✓ Free</td>
+      </tr>
+      <tr class="section-header"><td colspan="4">💳 Paid — credit card required to sign up</td></tr>
+      <tr>
+        <td><strong>OpenRouter</strong></td>
+        <td>Llama 3.1 8B (free tier)</td>
+        <td>Access to hundreds of models with one key</td>
+        <td class="paid-badge">💳 CC required</td>
+      </tr>
+      <tr>
+        <td><strong>Hugging Face</strong></td>
+        <td>Llama 3.1 8B</td>
+        <td>Thousands of open-source models</td>
+        <td class="paid-badge">💳 CC required</td>
+      </tr>
+      <tr>
+        <td><strong>Cohere</strong></td>
+        <td>Command R</td>
+        <td>Summarization, retrieval, business tasks</td>
+        <td class="paid-badge">💳 CC required</td>
+      </tr>
+      <tr>
+        <td><strong>Claude (Anthropic)</strong></td>
+        <td>Claude 3.5 Haiku</td>
+        <td>Exceptional reasoning, coding, long-form writing</td>
+        <td class="paid-badge">💳 CC required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note-box" style="margin-top:20px;">
+    <strong>🔄 Models verified weekly.</strong> A GitHub Actions workflow runs every Monday and tests every provider and model with a live API call. Any model that returns a 404 or 410 is automatically removed and an over-the-air update is pushed to all users — no app store update required.
   </div>
 </section>
 
@@ -145,35 +268,108 @@
 
 <section>
   <h2>Get <span>Started</span></h2>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div>
-        <strong>Install Expo Go</strong>
-        <p>Download Expo Go on your Android or iPhone from the app store.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div>
-        <strong>Clone and run</strong>
-        <p><code>git clone https://github.com/SoylentAquamarine/ManyAI.git &amp;&amp; npx expo start</code></p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div>
-        <strong>Add free API keys</strong>
-        <p>Open Settings → API Keys. Get free keys from Cerebras, Groq, Gemini, Mistral, and SambaNova — all free, no credit card.</p>
-      </div>
+  <div class="beta-box">
+    <h3>Beta — Android Available Now</h3>
+    <p style="color:var(--dim);margin-bottom:4px;">ManyAI is currently in beta on Android. Here's how to get it:</p>
+    <ol>
+      <li>Join the testing group: <a href="https://groups.google.com/g/manyai-testing">groups.google.com/g/manyai-testing</a></li>
+      <li>Then download from Google Play: <a href="https://play.google.com/store/apps/details?id=com.soylentaquamarine.manyai">ManyAI on Google Play</a></li>
+    </ol>
+    <p style="color:var(--dim);font-size:0.85rem;">You must join the Google Group before the Play Store link will work. iOS is built and in testing — coming soon.</p>
+  </div>
+
+  <div class="note-box" style="margin-top:24px;">
+    <strong>Tip:</strong> Adding API keys from a PC? Go to <a href="https://qr.io">qr.io</a>, paste the key, choose TEXT mode, and generate a QR code. Then tap the QR button in ManyAI to scan it in — no typing required.
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Frequently Asked <span>Questions</span></h2>
+  <dl class="faq">
+
+    <dt>What does this app do?</dt>
+    <dd>ManyAI is a wrapper around AI engines. It gives you a single interface to 13 publicly available AI providers — most with free tiers, some paid. Ask a question once and ManyAI finds the best available answer.</dd>
+
+    <dt>What do I get for free?</dt>
+    <dd>ManyAI routes your query to any available AI provider — all free, all the time. When you first connect an API key you'll see great results. Over time, expect roughly 30–120 successful requests per day across various providers before hitting rate limits. The whole point is to maximize what's free with no strings attached.</dd>
+
+    <dt>How do I add API keys?</dt>
+    <dd>Open <strong>Settings → API Keys</strong> in the app. For each provider, visit their site, sign in, and generate a free key.
+      <br><br><strong>Free — no credit card:</strong>
+      <ul style="margin-top:8px;margin-left:20px;line-height:2;">
+        <li>Cerebras: <a href="https://cloud.cerebras.ai">cloud.cerebras.ai</a></li>
+        <li>Groq: <a href="https://console.groq.com">console.groq.com</a></li>
+        <li>Gemini: <a href="https://aistudio.google.com">aistudio.google.com</a></li>
+        <li>Mistral: <a href="https://console.mistral.ai">console.mistral.ai</a></li>
+        <li>SambaNova: <a href="https://cloud.sambanova.ai">cloud.sambanova.ai</a></li>
+        <li>Fireworks: <a href="https://fireworks.ai">fireworks.ai</a></li>
+        <li>OpenAI: <a href="https://platform.openai.com">platform.openai.com</a></li>
+        <li>Cloudflare: <a href="https://dash.cloudflare.com">dash.cloudflare.com</a> — enter as <code>accountID:apiToken</code></li>
+      </ul>
+    </dd>
+
+    <dt>How do I use it once I install it?</dt>
+    <dd>Use it just like any AI app. Out of the box, Pollinations is enabled and requires no key, so you can start getting results immediately. Add more API keys to unlock automatic routing across all providers.</dd>
+
+    <dt>Can I save responses?</dt>
+    <dd>Yes. Any text or image response has a Save button. Choose a category, edit the title if you want, and it's stored. You can also hit Refine to toss a saved response back into chat for follow-up questions.</dd>
+
+    <dt>Can I generate images?</dt>
+    <dd>Yes — just ask naturally. "Draw me a cartoon cat in a tree." ManyAI routes it to an image-capable provider automatically. Pollinations supports image generation with no key needed.</dd>
+
+    <dt>Is there an iOS version?</dt>
+    <dd>An iOS version is built and in testing. The app is built with React Native and Expo so it runs on both platforms. Android is the primary focus for the initial release.</dd>
+
+    <dt>How do I get help?</dt>
+    <dd>Contact Steve directly at <a href="mailto:stephen.pleasants@gmail.com">stephen.pleasants@gmail.com</a>.</dd>
+
+    <dt>I like turtles.</dt>
+    <dd>Yeah, me too.</dd>
+
+  </dl>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Built <span>With</span></h2>
+  <div class="tech-grid">
+    <span class="tech-pill">React Native</span>
+    <span class="tech-pill">Expo</span>
+    <span class="tech-pill">expo-secure-store</span>
+    <span class="tech-pill">expo-camera</span>
+    <span class="tech-pill">expo-image-picker</span>
+    <span class="tech-pill">AsyncStorage</span>
+  </div>
+  <p style="color:var(--dim);font-size:0.9rem;">All code was written by <a href="https://claude.ai">Claude</a> (Anthropic) under Steve's direction. AI calls during development were offloaded using <a href="https://soylentaquamarine.github.io/the-brain/">The Brain</a> — an orchestration system that routes tasks to free AI providers. ManyAI is essentially a mobile version of that same idea.</p>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Support <span>ManyAI</span></h2>
+  <div class="donate-box">
+    <h3>It's free — tips are appreciated but never expected</h3>
+    <p>If ManyAI saves you money on AI subscriptions, a small tip is always welcome.</p>
+    <div class="donate-links">
+      <a href="https://www.paypal.com/donate/?business=L8TLNTRBQSF3Q&no_recurring=0&item_name=Thank+you+for+contributing+to+the+ManyAI+project.++Those+Claude+tokens+are+not+cheap%21&currency_code=USD">PayPal Donate</a>
+      <a href="https://cash.app/$StevePleasants9">Cash App — $StevePleasants9</a>
+      <a href="https://venmo.com/StevePleasants9">Venmo — @StevePleasants9</a>
     </div>
   </div>
-  <div class="tip"><strong>Tip:</strong> Go to <a href="https://qr.io">qr.io</a> on your laptop, paste an API key, generate a QR code, then tap the QR button in the app to scan it in — no typing needed.</div>
+
+  <div class="license-box">
+    <strong>License: GNU General Public License v3.0</strong><br>
+    Free to use, study, and modify. If you distribute a modified version — including publishing it on an app store — you must open-source your changes under the same GPL v3 license. You may not sell a closed-source product based on this code without the author's permission.<br>
+    <span style="color:var(--dim)">© Steve Pleasants.</span>
+  </div>
 </section>
 
 <footer>
-  <p>Built by <a href="https://github.com/SoylentAquamarine">Steve Pleasants</a> · <a href="https://github.com/SoylentAquamarine/ManyAI">GitHub</a> · GPL v3</p>
-  <p style="margin-top:8px">No ads. No banners. No subscriptions. Ever.</p>
+  <p>Built by <a href="https://github.com/SoylentAquamarine">Steve Pleasants</a> · <a href="https://github.com/SoylentAquamarine/ManyAI">GitHub</a> · <a href="https://stevepleasants.com">StevePleasants.com</a> · GPL v3</p>
+  <p style="margin-top:6px;color:var(--dim)">No ads. No banners. No subscriptions. Ever.</p>
 </footer>
 
 </body>
