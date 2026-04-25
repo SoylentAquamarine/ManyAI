@@ -143,3 +143,72 @@ ManyAI is free. If it saves you money or time, a tip is appreciated but never ex
 Free to use, study, and modify. If you distribute a modified version — including publishing it on an app store — you must open-source your changes under the same GPL v3 license. You may not sell a closed-source product based on this code without the author's permission.
 
 © Steve Pleasants. See [LICENSE](LICENSE) for full terms.
+
+---
+
+## Changelog
+
+### 2026-04-24
+
+**Image generation + share utilities + library restructure**
+- Added `lib/providers/imageGen.ts` — image generation via Pollinations and OpenAI DALL-E
+- Added `lib/saved/shareUtils.ts` — share sheet utilities for sharing saved responses
+- Added `lib/saved/refineSeed.ts` — AI-assisted response refinement
+- Reorganized `lib/` into feature subfolders: `lib/providers/`, `lib/saved/`
+- Added `claude.md` with architecture and development rules
+- Updated app icon and Android adaptive icon assets
+- Added Google Play feature graphic and 512px icon
+
+### 2026-04-22
+
+- Cerebras: retired `llama-3.3-70b`, replaced with `gpt-oss-120b`
+- Fixed Cerebras model ID `llama3.3-70b` → `llama-3.3-70b` (was returning 404)
+- HuggingFace: swapped `Mistral-7B-Instruct-v0.3` (not a chat model) for `HuggingFaceH4/zephyr-7b-beta`
+
+### 2026-04-21
+
+**Provider architecture**
+- Single source of truth: `instructionsUrl` field added to `Provider` interface — every provider now declares its own key-signup URL in `providers.ts`; instructions screen derived dynamically, no more hardcoded lists
+- Fixed `moveUp`/`moveDown` provider reordering — was swapping wrong providers when gaps existed in the visible list
+- `loadAllKeys()` was hardcoded to 7 providers — now uses `ROUTING_ORDER` dynamically
+
+**Remote config**
+- `public/config.json` now lives in the repo (served via `raw.githubusercontent.com`)
+- `scripts/generate_config.py` auto-regenerates it from `providers.ts`
+- Weekly workflow always regenerates and commits if changed — no more manual FTP
+
+**Automated model maintenance**
+- Added `.github/workflows/weekly-model-check.yml` — runs every Monday at 8am UTC
+- Added `scripts/test_models.py` and `scripts/patch_providers.py`
+- Calls every provider/model, removes any returning 404/410, commits and pushes automatically
+- Cerebras: replaced deprecated `llama3.1-70b` with `llama3.3-70b`
+- Groq: removed `deepseek-r1-distill-llama-70b` (400 error)
+- SambaNova: removed 405B and DeepSeek-R1 (410 GONE)
+
+**Bug fixes**
+- OpenRouter: default changed to `openrouter/free` (auto-router); removed rate-limited `:free` model pins
+- Cohere: replaced retired `command-r` aliases with versioned model IDs (`command-r-08-2024`, etc.)
+- HuggingFace: set `Qwen2.5-72B` as default model
+- Cloudflare: marked as free tier; removed Mistral 7B model
+- Fixed KAV (Keep Alive View) grey bar layout using padding instead of fixed height
+- Fixed KAV background color mismatch in dark mode
+- Validate stored model selections against current model list on load — clears stale selections
+- Fixed duplicate Save button on image responses; Share button color now matches Save
+- Added Cloudflare to `test_models.py` coverage; fixed HuggingFace base URL
+
+### 2026-04-18
+
+**Initial release**
+- React Native + Expo mobile app for Android and iOS
+- 13 AI providers: Cerebras, Groq, Gemini, Mistral, SambaNova, Fireworks, OpenAI, Cloudflare, OpenRouter, HuggingFace, Cohere, Anthropic, Pollinations
+- Multi-provider routing with automatic fallback — tries next provider silently on failure, rate limit, or error
+- Task-type routing: fastest providers for quick Q&A, highest-quality for reasoning, vision-capable for images
+- API key management: paste keys or scan QR codes generated from your laptop
+- Provider order control: enable/disable providers, set custom priority
+- Compare mode: send same prompt to all providers simultaneously, compare side by side
+- Image and camera attachment support — routed to vision-capable providers (Gemini, OpenAI)
+- Save responses to custom categories (Recipes, Code, Research, Ideas, etc.)
+- Built-in instructions for getting free API keys for every provider
+- All keys stored encrypted using OS secure enclave (expo-secure-store)
+- Dark theme
+- GPL v3 license
