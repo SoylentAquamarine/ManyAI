@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Overview — ManyAI</title>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+      --accent: #4ecdc4; --text: #e2e8f0; --muted: #8892a4;
+      --code-bg: #090c13; --th-bg: #141720;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.6rem 2rem; font-size: 0.82rem; color: var(--muted); }
+    .topbar a { color: var(--muted); } .topbar a:hover { color: var(--accent); } .topbar span { margin: 0 0.4rem; }
+    header { padding: 2.5rem 2rem 2rem; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.9rem; font-weight: 700; color: var(--accent); }
+    header p.meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+    main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin: 1.5rem 0 0.6rem; }
+    p { margin-bottom: 0.85rem; } p:last-child { margin-bottom: 0; }
+    ul, ol { margin: 0.5rem 0 0.85rem 1.4rem; } li { margin-bottom: 0.35rem; }
+    table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1rem; font-size: 0.88rem; }
+    th { background: var(--th-bg); color: var(--accent); padding: 0.55rem 1rem; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); }
+    td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; } tr:hover td { background: #1e2130; }
+    code { font-family: 'Courier New', Consolas, monospace; font-size: 0.85em; background: var(--code-bg); border: 1px solid var(--border); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin: 0.8rem 0 1rem; }
+    pre code { background: none; border: none; padding: 0; font-size: 0.87rem; color: #c3cfe8; }
+    footer { margin-top: 4rem; padding: 1.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../index.html">ManyAI</a>
+  <span>/</span>
+  <a href="../index.html">Docs</a>
+  <span>/</span>
+  System Overview
+</div>
+
+<header>
+  <h1>System Overview — ManyAI Mobile</h1>
+  <p class="meta">Blueprint · Last updated 2026-05-02</p>
+</header>
+
+<main>
+
+  <h2>Purpose</h2>
+  <p>ManyAI is a React Native mobile application that acts as a multi-provider AI router. It intelligently routes user prompts to the best available free AI provider, implementing an automatic fallback chain that cycles through up to 8 providers before giving up. The core promise: you always get an answer, even when individual providers are rate-limited or down. It is shareware — free to use, supported by donations.</p>
+
+  <h2>Tech Stack</h2>
+  <table>
+    <tr><th>Component</th><th>Technology</th></tr>
+    <tr><td>Framework</td><td>React Native (Expo SDK)</td></tr>
+    <tr><td>Routing</td><td>Expo Router v3 (file-based)</td></tr>
+    <tr><td>Language</td><td>TypeScript</td></tr>
+    <tr><td>Storage</td><td>AsyncStorage</td></tr>
+    <tr><td>Image handling</td><td>expo-image-picker</td></tr>
+    <tr><td>OTA updates</td><td>expo-updates</td></tr>
+    <tr><td>Version</td><td>1.0.5</td></tr>
+  </table>
+
+  <h2>Navigation (3 Tabs)</h2>
+  <p>The app uses a bottom tab navigator (<code>expo-router</code> Tabs). Tab bar is dark-themed (<code>#16213e</code> background, <code>#4ECDC4</code> active tint).</p>
+  <table>
+    <tr><th>Tab</th><th>File</th><th>Purpose</th></tr>
+    <tr><td>Home</td><td><code>app/(tabs)/index.tsx</code></td><td>Main chat interface</td></tr>
+    <tr><td>Saved</td><td><code>app/(tabs)/saved.tsx</code></td><td>Saved responses management</td></tr>
+    <tr><td>Settings</td><td><code>app/(tabs)/explore.tsx</code></td><td>API keys, providers, models</td></tr>
+  </table>
+
+  <h2>Provider System (13 Providers)</h2>
+  <p>Providers are defined in <code>lib/providers/providers.ts</code>. The routing order (<code>ROUTING_ORDER</code>) defines priority. <code>pickProvider()</code> first tries task-best providers, then any capable provider, then falls back to Pollinations.</p>
+  <table>
+    <tr><th>Provider</th><th>Free Tier</th><th>Vision</th><th>Key Required</th><th>Notes</th></tr>
+    <tr><td>Cerebras</td><td>Yes</td><td>No</td><td>Yes</td><td>Fastest inference</td></tr>
+    <tr><td>Groq</td><td>Yes</td><td>No</td><td>Yes</td><td>Fast, reliable general</td></tr>
+    <tr><td>Gemini</td><td>Yes</td><td><strong>Yes</strong></td><td>Yes</td><td>Best for summarization, translation</td></tr>
+    <tr><td>Mistral</td><td>Yes</td><td>No</td><td>Yes</td><td>Best for coding, creative</td></tr>
+    <tr><td>SambaNova</td><td>Yes</td><td>No</td><td>Yes</td><td>Best for deep reasoning</td></tr>
+    <tr><td>OpenRouter</td><td>Yes</td><td>No</td><td>Yes</td><td>Multi-model gateway</td></tr>
+    <tr><td>Hugging Face</td><td>Yes</td><td>No</td><td>Yes</td><td>Massive model selection</td></tr>
+    <tr><td>Cohere</td><td>Yes</td><td>No</td><td>Yes</td><td>Strong summarization</td></tr>
+    <tr><td>Cloudflare AI</td><td>Yes</td><td>No</td><td>Yes</td><td>Key format: <code>accountId:apiToken</code></td></tr>
+    <tr><td>Fireworks</td><td>Yes</td><td>No</td><td>Yes</td><td>Strong with DeepSeek V3</td></tr>
+    <tr><td>OpenAI</td><td>Yes*</td><td><strong>Yes</strong></td><td>Yes</td><td>*Requires billing setup</td></tr>
+    <tr><td>Anthropic</td><td>No</td><td><strong>Yes</strong></td><td>Yes</td><td>Paid only, no free tier</td></tr>
+    <tr><td>Pollinations</td><td>Always</td><td>No</td><td><strong>No</strong></td><td>Ultimate fallback, always available</td></tr>
+  </table>
+  <p>Vision-capable providers (accept image input): <strong>Gemini, OpenAI, Anthropic</strong></p>
+
+  <h2>Key Features</h2>
+  <ul>
+    <li><strong>Auto-fallback:</strong> Up to <code>MAX_RETRIES = 8</code> provider attempts per message</li>
+    <li><strong>Session failure tracking:</strong> Failed providers are skipped for the rest of the session (<code>failedProviders</code> useRef)</li>
+    <li><strong>Conversation history:</strong> Last 10 messages sent as context (excludes system/error messages)</li>
+    <li><strong>Image input:</strong> Attach from gallery (🖼) or camera (📷); base64 encoded, quality 0.5; vision providers only</li>
+    <li><strong>Image generation:</strong> Keyword detection (<code>isImageGenRequest()</code>) routes to image providers (Pollinations, free)</li>
+    <li><strong>Save responses:</strong> Any AI reply can be saved to a user-defined category</li>
+    <li><strong>Refine flow:</strong> Saved responses can be sent back to Chat to continue the conversation</li>
+    <li><strong>OTA updates:</strong> Silent background check on every launch via <code>expo-updates</code>; prompts to restart if update available</li>
+    <li><strong>First-launch onboarding:</strong> Help modal shown automatically on first open, dismissable, accessible via <code>/help</code> or <code>?</code> button</li>
+    <li><strong>Remote config:</strong> <code>stevepleasants.com/manyai/config.json</code> can patch model lists without a new build</li>
+  </ul>
+
+  <h2>Storage (AsyncStorage Keys)</h2>
+  <table>
+    <tr><th>Key</th><th>Contents</th></tr>
+    <tr><td><code>manyai_keys_*</code></td><td>API keys per provider</td></tr>
+    <tr><td><code>manyai_provider_order</code></td><td>User-customized provider priority</td></tr>
+    <tr><td><code>manyai_enabled_*</code></td><td>Per-provider enabled toggle</td></tr>
+    <tr><td><code>manyai_model_*</code></td><td>Per-provider selected model</td></tr>
+    <tr><td><code>manyai_saved_*</code></td><td>Saved responses by category</td></tr>
+    <tr><td><code>manyai_categories</code></td><td>List of user-created categories</td></tr>
+    <tr><td><code>manyai_onboarded</code></td><td>Flag — hide help modal after first launch</td></tr>
+  </table>
+
+  <h2>Routing Logic (<code>pickProvider</code>)</h2>
+  <pre><code>1. Build available = keys present + pollinations (always)
+2. If image attached: filter to VISION_PROVIDERS only
+3. First pass: iterate ROUTING_ORDER, skip excluded/disabled,
+               prefer bestFor[taskType] match
+4. Second pass: iterate ROUTING_ORDER, return first capable provider
+5. Final fallback: return 'pollinations' if candidate
+6. If all exhausted: return null → show error message</code></pre>
+
+  <h2>API Shapes Supported (<code>callProvider.ts</code>)</h2>
+  <ul>
+    <li><strong>Pollinations:</strong> <code>GET text.pollinations.ai/{encoded_prompt}</code> — no auth, no key</li>
+    <li><strong>Gemini:</strong> <code>POST /models/{model}:generateContent</code> — parts array with <code>inline_data</code> for images</li>
+    <li><strong>Anthropic:</strong> <code>POST /messages</code> — <code>x-api-key</code> header, different body structure</li>
+    <li><strong>Cloudflare:</strong> Account ID embedded in URL, key split on <code>:</code> separator</li>
+    <li><strong>All others:</strong> OpenAI-compatible <code>/chat/completions</code> with <code>Authorization: Bearer</code> header</li>
+  </ul>
+  <p>Request timeout: <strong>30 seconds</strong> per attempt.</p>
+
+</main>
+
+<footer>Blueprint · ManyAI · <a href="../index.html">← Back to docs</a></footer>
+</body>
+</html>

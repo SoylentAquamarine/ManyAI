@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture — ManyAI</title>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+      --accent: #4ecdc4; --text: #e2e8f0; --muted: #8892a4;
+      --code-bg: #090c13; --th-bg: #141720;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.6rem 2rem; font-size: 0.82rem; color: var(--muted); }
+    .topbar a { color: var(--muted); } .topbar a:hover { color: var(--accent); } .topbar span { margin: 0 0.4rem; }
+    header { padding: 2.5rem 2rem 2rem; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.9rem; font-weight: 700; color: var(--accent); }
+    header p.meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+    main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin: 1.5rem 0 0.6rem; }
+    p { margin-bottom: 0.85rem; } p:last-child { margin-bottom: 0; }
+    ul, ol { margin: 0.5rem 0 0.85rem 1.4rem; } li { margin-bottom: 0.35rem; }
+    table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1rem; font-size: 0.88rem; }
+    th { background: var(--th-bg); color: var(--accent); padding: 0.55rem 1rem; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); }
+    td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; } tr:hover td { background: #1e2130; }
+    code { font-family: 'Courier New', Consolas, monospace; font-size: 0.85em; background: var(--code-bg); border: 1px solid var(--border); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin: 0.8rem 0 1rem; }
+    pre code { background: none; border: none; padding: 0; font-size: 0.87rem; color: #c3cfe8; }
+    footer { margin-top: 4rem; padding: 1.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../index.html">ManyAI</a>
+  <span>/</span>
+  <a href="../index.html">Docs</a>
+  <span>/</span>
+  Architecture
+</div>
+
+<header>
+  <h1>Architecture — ManyAI Mobile</h1>
+  <p class="meta">Blueprint · Last updated 2026-05-02</p>
+</header>
+
+<main>
+
+  <h2>Directory Structure</h2>
+  <pre><code>/
+├── app/                         # Expo Router — screens and navigation
+│   ├── _layout.tsx              # Root: Stack navigator, OTA update check, ThemeProvider
+│   ├── modal.tsx                # Modal screen
+│   └── (tabs)/
+│       ├── _layout.tsx          # Tab bar definition (Home, Saved, Settings)
+│       ├── index.tsx            # Chat screen (primary)
+│       ├── saved.tsx            # Saved responses
+│       └── explore.tsx          # Settings / provider configuration
+│
+├── lib/
+│   ├── providers/               # All AI provider logic
+│   │   ├── providers.ts         # PROVIDERS registry, ROUTING_ORDER, pickProvider()
+│   │   ├── callProvider.ts      # API adapter (text + vision)
+│   │   ├── imageGen.ts          # Image generation — detection + API calls
+│   │   ├── keyStore.ts          # AsyncStorage CRUD for API keys
+│   │   ├── providerPrefs.ts     # AsyncStorage for order, enabled state, selected models
+│   │   └── remoteConfig.ts      # Runtime model patching from remote JSON
+│   └── saved/
+│       ├── savedResponses.ts    # Save/load/delete responses by category
+│       ├── shareUtils.ts        # Native share sheet + save-to-device
+│       └── refineSeed.ts        # Module-level variable for cross-tab refine handoff
+│
+├── components/                  # Pure UI — no business logic
+│   ├── haptic-tab.tsx           # Tab bar button with haptic feedback
+│   ├── parallax-scroll-view.tsx
+│   ├── themed-text.tsx
+│   ├── themed-view.tsx
+│   └── ui/
+│       ├── collapsible.tsx
+│       ├── icon-symbol.tsx      # SF Symbol wrapper (iOS) + fallback
+│       └── icon-symbol.ios.tsx
+│
+├── constants/
+│   └── theme.ts                 # Color palette and theme tokens
+│
+├── hooks/
+│   └── use-color-scheme.ts      # Detects light/dark mode
+│
+└── assets/images/               # App icons, splash screens</code></pre>
+
+  <h2>Routing (Expo Router)</h2>
+  <ul>
+    <li>File-based routing — directory structure defines screen hierarchy.</li>
+    <li><code>app/_layout.tsx</code> is the root: wraps everything in <code>ThemeProvider</code>, mounts a <code>Stack</code> navigator, runs the OTA update check on mount.</li>
+    <li><code>unstable_settings.anchor = '(tabs)'</code> pins the initial route to the tab group.</li>
+    <li><code>(tabs)/_layout.tsx</code> defines the three-tab <code>Tabs</code> component with custom tab bar styling.</li>
+    <li>OTA check: <code>expo-updates</code> runs silently on production builds; on update available, shows alert with "Restart now" option.</li>
+  </ul>
+
+  <h2>Provider Layer (<code>lib/providers/</code>)</h2>
+
+  <h3><code>providers.ts</code></h3>
+  <p>The single source of truth for all provider metadata.</p>
+  <ul>
+    <li><strong><code>PROVIDERS</code>:</strong> Record mapping 13 <code>ProviderKey</code> values to <code>Provider</code> objects. Each has: <code>key</code>, <code>name</code>, <code>model</code> (default), <code>models[]</code> (user-selectable), <code>baseUrl</code>, <code>needsKey</code>, <code>paidOnly</code>, <code>color</code>, <code>bestFor: TaskType[]</code>, <code>supportsVision</code>, <code>instructionsUrl</code>, optional <code>extraHeaders</code>, optional <code>keyHint</code>.</li>
+    <li><strong><code>ROUTING_ORDER</code>:</strong> Ordered array of <code>ProviderKey</code> — defines priority when <code>taskType</code> has no bestFor match.</li>
+    <li><strong><code>pickProvider(availableKeys, taskType, exclude, order, enabled)</code>:</strong>
+      <ol>
+        <li>First pass: iterate <code>order</code>, skip if excluded/disabled/no key — return first where <code>bestFor.includes(taskType)</code>.</li>
+        <li>Second pass: iterate <code>order</code>, return first capable provider.</li>
+        <li>Fallback: return <code>'pollinations'</code> if not excluded.</li>
+        <li>If all exhausted: return <code>null</code>.</li>
+      </ol>
+    </li>
+  </ul>
+
+  <h3><code>callProvider.ts</code></h3>
+  <p>Unified API adapter. Handles 5 different API shapes:</p>
+  <table>
+    <tr><th>Shape</th><th>Providers</th><th>Notes</th></tr>
+    <tr><td>Pollinations</td><td>pollinations</td><td><code>GET text.pollinations.ai/{encoded}</code> — no auth</td></tr>
+    <tr><td>Gemini</td><td>gemini</td><td><code>POST /generateContent</code> — <code>parts</code> array, <code>inline_data</code> for images</td></tr>
+    <tr><td>Anthropic</td><td>anthropic</td><td><code>POST /messages</code> — <code>x-api-key</code> header, <code>anthropic-version</code> header</td></tr>
+    <tr><td>Cloudflare</td><td>cloudflare</td><td>Key split <code>accountId:apiToken</code>, account ID embedded in URL</td></tr>
+    <tr><td>OpenAI-compat</td><td>all others</td><td><code>POST /chat/completions</code>, <code>Authorization: Bearer</code></td></tr>
+  </table>
+  <p>Timeout per call: <strong>30 000 ms</strong> (AbortController). History capped at <code>MAX_HISTORY = 10</code> messages.</p>
+
+  <h3><code>imageGen.ts</code></h3>
+  <ul>
+    <li><strong><code>isImageGenRequest(text)</code>:</strong> Keyword-based detection (draw, generate image, create an image, paint, etc.).</li>
+    <li><strong><code>IMAGE_PROVIDERS</code>:</strong> Ordered array of image providers (Pollinations first — no key; Fireworks second — paid).</li>
+    <li><strong><code>callImageProvider(key, prompt, apiKey?)</code>:</strong> Returns <code>{ base64, mime, providerName, latencyMs, error? }</code>.</li>
+    <li><strong><code>imageProviderNeedsKey(key)</code>:</strong> Used to skip providers without keys during fallback loop.</li>
+  </ul>
+
+  <h3><code>keyStore.ts</code></h3>
+  <p>AsyncStorage-backed key CRUD. Keys stored per <code>ProviderKey</code>. <code>loadAllKeys()</code> returns <code>Partial&lt;Record&lt;ProviderKey, string&gt;&gt;</code>.</p>
+
+  <h3><code>providerPrefs.ts</code></h3>
+  <ul>
+    <li><code>loadProviderOrder()</code> → <code>ProviderKey[]</code> from AsyncStorage.</li>
+    <li><code>loadEnabledProviders()</code> → <code>Partial&lt;Record&lt;ProviderKey, boolean&gt;&gt;</code>.</li>
+    <li><code>loadSelectedModels()</code> → <code>Partial&lt;Record&lt;ProviderKey, string&gt;&gt;</code>.</li>
+    <li>All three are loaded together on tab focus via <code>useFocusEffect</code>.</li>
+  </ul>
+
+  <h3><code>remoteConfig.ts</code></h3>
+  <p>Fetches <code>stevepleasants.com/manyai/config.json</code> to patch model lists at runtime without a build. Applied to the <code>PROVIDERS</code> object on app load.</p>
+
+  <h2>Saved Layer (<code>lib/saved/</code>)</h2>
+
+  <h3><code>savedResponses.ts</code></h3>
+  <p>Responses stored in AsyncStorage keyed by category. Supports: save (with optional title derivation from prompt), load, delete, move, rename category. Saved item shape: <code>{ id, prompt, response, provider, category, title, generatedImageUri?, createdAt }</code>.</p>
+
+  <h3><code>shareUtils.ts</code></h3>
+  <ul>
+    <li><code>shareText(content)</code>: Native share sheet (OS share dialog).</li>
+    <li><code>shareImage(dataUri)</code>: Converts data URI → file, shares via native sheet.</li>
+    <li><code>saveImageToDevice(dataUri)</code>: Writes to device media library.</li>
+  </ul>
+
+  <h3><code>refineSeed.ts</code></h3>
+  <p>Module-level variable (not React state or AsyncStorage) holding <code>{ prompt, response, title, provider }</code>. <code>setRefineSeed(seed)</code> is called from the Saved tab when user taps "Refine". <code>consumeRefineSeed()</code> is called in Chat tab's <code>useFocusEffect</code> — reads and clears the variable atomically. Achieves cross-tab communication without navigation params or global state.</p>
+
+  <h2>Chat Screen Key State (<code>app/(tabs)/index.tsx</code>)</h2>
+  <table>
+    <tr><th>State</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>messages</code></td><td><code>Message[]</code></td><td>Conversation array including system greeting</td></tr>
+    <tr><td><code>input</code></td><td><code>string</code></td><td>Current text field value</td></tr>
+    <tr><td><code>pendingImage</code></td><td><code>PendingImage|null</code></td><td>Attached image (uri + base64 + mime)</td></tr>
+    <tr><td><code>loading</code></td><td><code>boolean</code></td><td>True while any API call is in flight</td></tr>
+    <tr><td><code>loadingLabel</code></td><td><code>string</code></td><td>"Trying ProviderName · model..." shown in typing indicator</td></tr>
+    <tr><td><code>keys</code></td><td><code>Partial&lt;Record&lt;ProviderKey, string&gt;&gt;</code></td><td>Reloaded on each tab focus</td></tr>
+    <tr><td><code>providerOrder</code></td><td><code>ProviderKey[]</code></td><td>Reloaded on each tab focus</td></tr>
+    <tr><td><code>enabledProviders</code></td><td><code>Partial&lt;Record&lt;ProviderKey, boolean&gt;&gt;</code></td><td>Reloaded on each tab focus</td></tr>
+    <tr><td><code>selectedModels</code></td><td><code>Partial&lt;Record&lt;ProviderKey, string&gt;&gt;</code></td><td>Reloaded on each tab focus</td></tr>
+    <tr><td><code>failedProviders</code></td><td><code>useRef&lt;Set&lt;ProviderKey&gt;&gt;</code></td><td>Not state — persists across renders, reset on tab focus</td></tr>
+    <tr><td><code>saveTarget</code></td><td><code>Message|null</code></td><td>Message awaiting category selection</td></tr>
+    <tr><td><code>refineTitle</code></td><td><code>string|null</code></td><td>Set when refine seed is consumed</td></tr>
+    <tr><td><code>showHelp</code></td><td><code>boolean</code></td><td>Help modal visibility</td></tr>
+  </table>
+
+  <h2>Send Flow</h2>
+  <pre><code>send()
+  │
+  ├─ /help → show help modal, return
+  │
+  ├─ IMAGE GENERATION PATH (text + no attached image + isImageGenRequest())
+  │   └─ for each IMAGE_PROVIDER:
+  │       skip if needs key and key missing
+  │       callImageProvider() → success: display generatedImage bubble, return
+  │       failure: try next provider
+  │   └─ all failed → show error bubble
+  │
+  └─ TEXT GENERATION PATH (default)
+      build available = keys + 'pollinations'
+      if pendingImage: filter to VISION_PROVIDERS ∩ available
+      build history (last 10 non-error non-system messages)
+      tried = session failedProviders
+      while attempts &lt; MAX_RETRIES (8):
+          providerKey = pickProvider(pool, 'general', tried, order, enabled)
+          if null → break (all exhausted)
+          inject selectedModel override
+          setLoadingLabel("Trying Name · model...")
+          result = callProvider(provider, text, key, imageBase64, mime, history)
+          if success → add assistant bubble, return
+          else: tried.add(key), failedProviders.current.add(key)
+      all failed → show error bubble with instructions</code></pre>
+
+  <h2>Render Optimization</h2>
+  <ul>
+    <li><code>renderItem</code> wrapped in <code>useCallback(fn, [])</code> — no deps, because message content never mutates after creation.</li>
+    <li><code>keyExtractor</code> wrapped in <code>useCallback</code>.</li>
+    <li><code>FlatList</code> with <code>removeClippedSubviews={false}</code> — suppresses VirtualizedList warning for short lists.</li>
+    <li>Image bubbles: <code>generatedImageUri</code> triggers wider <code>imageBubble</code> style (95% width vs 82%).</li>
+  </ul>
+
+  <h2>Color Palette (Dark Theme)</h2>
+  <table>
+    <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+    <tr><td>Background</td><td><code>#1a1a2e</code></td><td>Screen background</td></tr>
+    <tr><td>Surface</td><td><code>#16213e</code></td><td>Header, AI bubbles, input bar</td></tr>
+    <tr><td>Accent</td><td><code>#0f3460</code></td><td>User bubbles, buttons</td></tr>
+    <tr><td>Teal</td><td><code>#4ECDC4</code></td><td>Active tint, provider labels, send button</td></tr>
+    <tr><td>Error</td><td><code>#FF6B6B</code></td><td>Error messages</td></tr>
+    <tr><td>Text</td><td><code>#eeeeee</code></td><td>Primary text</td></tr>
+    <tr><td>Muted</td><td><code>#888</code></td><td>Secondary text, timestamps</td></tr>
+  </table>
+
+</main>
+
+<footer>Blueprint · ManyAI · <a href="../index.html">← Back to docs</a></footer>
+</body>
+</html>
