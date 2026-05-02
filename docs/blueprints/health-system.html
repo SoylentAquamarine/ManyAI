@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health System — ManyAI</title>
+  <style>
+    :root {
+      --bg: #0f0f1a; --surface: #16213e; --border: #2a2a4a;
+      --accent: #4ecdc4; --text: #e0e0e0; --muted: #888;
+      --code-bg: #0a0a14; --th-bg: #0f3460;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .bp-nav { display: flex; gap: 8px; padding: 0.75rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .bp-nav a { font-size: 0.82rem; padding: 0.3rem 0.9rem; border-radius: 20px; text-decoration: none; border: 1px solid var(--border); color: var(--muted); }
+    .bp-nav a:hover { border-color: var(--accent); color: var(--accent); }
+    .bp-nav a.home { background: var(--accent); color: #0f0f1a; border-color: var(--accent); font-weight: 700; }
+    .bp-nav a.home:hover { opacity: 0.85; }
+    .bp-nav a.current { border-color: var(--accent); color: var(--accent); font-weight: 700; cursor: default; }
+    header { padding: 2.5rem 2rem 2rem; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.9rem; font-weight: 700; color: var(--accent); }
+    header p.meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+    main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin: 1.5rem 0 0.6rem; }
+    p { margin-bottom: 0.85rem; } p:last-child { margin-bottom: 0; }
+    ul, ol { margin: 0.5rem 0 0.85rem 1.4rem; } li { margin-bottom: 0.35rem; }
+    footer { margin-top: 4rem; padding: 1.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="bp-nav">
+  <a class="home" href="../index.html">← Home</a>
+  <a href="system-overview.html">System Overview</a>
+  <a href="architecture.html">Architecture</a>
+  <a href="data-pipeline.html">Data Pipeline</a>
+  <a class="current">Health System</a>
+  <a href="usage-system.html">Usage System</a>
+  <a href="workflows.html">Workflows</a>
+  <a href="mcp-tools.html">MCP Tools</a>
+</div>
+
+<header>
+  <h1>Health System — ManyAI</h1>
+  <p class="meta">Blueprint · Last updated 2026-05-02</p>
+</header>
+
+<main>
+
+<h2>No Persistent Health Monitoring</h2>
+<p>ManyAI does not implement a background health check system. There is no polling of provider endpoints, no uptime tracking, and no stored health state. Provider status is discovered reactively — a provider is considered failed only when a live API call returns an error.</p>
+
+<h2>Session Failure Tracking</h2>
+<p>The closest equivalent to health monitoring is session-scoped failure tracking via the <code>failedProviders</code> <code>useRef</code> in the main chat component.</p>
+<ul>
+  <li>When a provider returns an error, it is added to <code>failedProviders</code>.</li>
+  <li>On each subsequent message in the same session, failed providers are skipped by <code>pickProvider()</code>.</li>
+  <li>This state is reset when the app is restarted — there is no persistence between launches.</li>
+  <li>Up to <code>MAX_RETRIES = 8</code> providers are tried before giving up on a single message.</li>
+</ul>
+
+<h2>No Provider Penalty System</h2>
+<p>ManyAI does not implement weighted scoring or penalty-based routing. Provider selection is based solely on the static <code>ROUTING_ORDER</code> and <code>bestFor</code> task-type matching. A provider that failed in the last session is treated as fully available when the app is reopened.</p>
+
+<h2>Comparison with ManyAI Desktop</h2>
+<p>ManyAI Desktop implements a persistent health check system (<code>lib/healthCheck.ts</code>) that polls providers on a configurable interval and applies a <code>getPenalty()</code> score to downweight degraded providers in smart routing. ManyAI mobile has no equivalent — the mobile app prioritizes simplicity and low background resource usage.</p>
+
+</main>
+
+<footer>Blueprint · ManyAI · <a href="../index.html">← Back to docs</a></footer>
+</body>
+</html>

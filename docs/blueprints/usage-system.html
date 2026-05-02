@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usage System — ManyAI</title>
+  <style>
+    :root {
+      --bg: #0f0f1a; --surface: #16213e; --border: #2a2a4a;
+      --accent: #4ecdc4; --text: #e0e0e0; --muted: #888;
+      --code-bg: #0a0a14; --th-bg: #0f3460;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .bp-nav { display: flex; gap: 8px; padding: 0.75rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .bp-nav a { font-size: 0.82rem; padding: 0.3rem 0.9rem; border-radius: 20px; text-decoration: none; border: 1px solid var(--border); color: var(--muted); }
+    .bp-nav a:hover { border-color: var(--accent); color: var(--accent); }
+    .bp-nav a.home { background: var(--accent); color: #0f0f1a; border-color: var(--accent); font-weight: 700; }
+    .bp-nav a.home:hover { opacity: 0.85; }
+    .bp-nav a.current { border-color: var(--accent); color: var(--accent); font-weight: 700; cursor: default; }
+    header { padding: 2.5rem 2rem 2rem; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.9rem; font-weight: 700; color: var(--accent); }
+    header p.meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+    main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+    p { margin-bottom: 0.85rem; } p:last-child { margin-bottom: 0; }
+    ul { margin: 0.5rem 0 0.85rem 1.4rem; } li { margin-bottom: 0.35rem; }
+    table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1rem; font-size: 0.88rem; }
+    th { background: var(--th-bg); color: var(--accent); padding: 0.55rem 1rem; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); }
+    td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; } tr:hover td { background: var(--surface); }
+    footer { margin-top: 4rem; padding: 1.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="bp-nav">
+  <a class="home" href="../index.html">← Home</a>
+  <a href="system-overview.html">System Overview</a>
+  <a href="architecture.html">Architecture</a>
+  <a href="data-pipeline.html">Data Pipeline</a>
+  <a href="health-system.html">Health System</a>
+  <a class="current">Usage System</a>
+  <a href="workflows.html">Workflows</a>
+  <a href="mcp-tools.html">MCP Tools</a>
+</div>
+
+<header>
+  <h1>Usage System — ManyAI</h1>
+  <p class="meta">Blueprint · Last updated 2026-05-02</p>
+</header>
+
+<main>
+
+<h2>No Usage Tracking</h2>
+<p>ManyAI does not capture or store usage data. API calls are made directly from the React Native app to provider APIs; token counts, costs, latency, and call history are not recorded.</p>
+
+<h2>What Is Stored in AsyncStorage</h2>
+<p>ManyAI persists configuration and content data, but not usage metrics.</p>
+<table>
+  <tr><th>Key</th><th>Contents</th></tr>
+  <tr><td><code>manyai_keys_*</code></td><td>API keys per provider (encrypted)</td></tr>
+  <tr><td><code>manyai_provider_order</code></td><td>User-customized provider priority</td></tr>
+  <tr><td><code>manyai_enabled_*</code></td><td>Per-provider enabled toggle</td></tr>
+  <tr><td><code>manyai_model_*</code></td><td>Per-provider selected model</td></tr>
+  <tr><td><code>manyai_saved_*</code></td><td>Saved AI responses by category</td></tr>
+  <tr><td><code>manyai_categories</code></td><td>User-created category list</td></tr>
+  <tr><td><code>manyai_onboarded</code></td><td>First-launch flag</td></tr>
+</table>
+<p>None of the above keys track call frequency, token consumption, or provider performance over time.</p>
+
+<h2>Design Intent</h2>
+<p>ManyAI is designed for end users who want free AI access without setup overhead. Adding usage dashboards or cost tracking would add complexity without benefit for users who are using free-tier providers. The-brain (a separate developer tool) implements full usage logging for contexts where token cost tracking matters.</p>
+
+</main>
+
+<footer>Blueprint · ManyAI · <a href="../index.html">← Back to docs</a></footer>
+</body>
+</html>
