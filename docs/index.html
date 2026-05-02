@@ -39,6 +39,10 @@
     .btn-primary:hover { background: #3ab8b0; text-decoration: none; }
     .btn-secondary { background: transparent; color: var(--accent); font-weight: 700; padding: 12px 30px; border-radius: 30px; text-decoration: none; font-size: 1rem; border: 2px solid var(--accent); }
     .btn-secondary:hover { background: rgba(78,205,196,0.1); text-decoration: none; }
+    .dev-nav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .dev-nav span { color: var(--dim); font-size: 0.75rem; align-self: center; }
+    .dev-nav a { font-size: 0.8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); color: var(--dim); text-decoration: none; }
+    .dev-nav a:hover { border-color: var(--accent); color: var(--accent); }
 
     .divider { border: none; border-top: 1px solid var(--border); }
     section { max-width: 940px; margin: 0 auto; padding: 60px 20px; }
@@ -104,6 +108,11 @@
   <div class="btn-row">
     <a href="https://play.google.com/store/apps/details?id=com.soylentaquamarine.manyai" class="btn-primary">Download on Google Play</a>
     <a href="https://groups.google.com/g/manyai-testing" class="btn-secondary">Join Beta Testing</a>
+  </div>
+  <div class="dev-nav">
+    <span>Dev docs:</span>
+    <a href="blueprints/system-overview.html">System Overview</a>
+    <a href="blueprints/architecture.html">Architecture</a>
   </div>
 </header>
 
@@ -364,16 +373,6 @@
     <strong>License: GNU General Public License v3.0</strong><br>
     Free to use, study, and modify. If you distribute a modified version — including publishing it on an app store — you must open-source your changes under the same GPL v3 license. You may not sell a closed-source product based on this code without the author's permission.<br>
     <span style="color:var(--dim)">© Steve Pleasants.</span>
-  </div>
-</section>
-
-<section style="padding:40px 20px;border-top:1px solid var(--border);">
-  <div style="max-width:940px;margin:0 auto;">
-    <h2 style="font-size:1.1rem;margin-bottom:16px;">Developer <span style="color:var(--accent)">Documentation</span></h2>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;">
-      <a href="blueprints/system-overview.html" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-size:0.85rem;color:var(--accent);">System Overview</a>
-      <a href="blueprints/architecture.html" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-size:0.85rem;color:var(--accent);">Architecture</a>
-    </div>
   </div>
 </section>
 
