@@ -219,3 +219,22 @@ Free to use, study, and modify. If you distribute a modified version — includi
 - All keys stored encrypted using OS secure enclave (expo-secure-store)
 - Dark theme
 - GPL v3 license
+
+## License
+
+This project is licensed under the **GNU General Public License v3 (GPLv3)**.
+You are free to use, modify, and distribute this software under the terms of the GPLv3.
+You can find the full license text by looking at the `LICENSE` file in this repository, or at the official source: [Link to your LICENSE file or https://www.gnu.org/licenses/gpl-3.0.en.html]
+
+**Key points of the GPLv3:**
+*   You can use this software for any purpose, including commercial use.
+*   You can modify the source code.
+*   If you distribute modified versions of this software, or software that incorporates this code, you must also make your source code available under the GPLv3. This ensures that the software remains free and open for everyone.
+
+## Support & Donations
+
+Developing and maintaining this software requires time and resources. If you find this program useful, especially for your business or commercial projects, please consider supporting its continued development with a voluntary donation.
+
+A small contribution of **$5** is greatly appreciated and helps us keep improving this project for everyone. You can donate via: [Link to your donation page/PayPal/etc. - e.g., https://www.paypal.me/yourname]
+
+**Donations are entirely voluntary and are not required to use or distribute this software under the terms of the GPLv3.** Your generosity is highly valued and helps us dedicate more time to making this project even better!
